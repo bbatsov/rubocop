@@ -68,7 +68,7 @@ module RuboCop
           [Layout::MultilineMethodArgumentLineBreaks]
         end
 
-        # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+        # rubocop:disable Metrics/AbcSize
         def on_send(node)
           return if allow_send? && !node.method?(:public_send)
           return unless (first_argument = node.first_argument)
@@ -76,7 +76,7 @@ module RuboCop
 
           offense_range = offense_range(node)
           method_name = first_argument.value
-          return if !METHOD_NAME_PATTERN.match?(method_name) || RESERVED_WORDS.include?(method_name)
+          return unless valid_method_name?(method_name)
 
           add_offense(offense_range, message: format(MSG, method_name: method_name)) do |corrector|
             if node.arguments.one?
@@ -88,7 +88,7 @@ module RuboCop
           end
         end
         alias on_csend on_send
-        # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+        # rubocop:enable Metrics/AbcSize
 
         private
 
@@ -98,6 +98,11 @@ module RuboCop
 
         def offense_range(node)
           node.loc.selector.join(node.source_range.end)
+        end
+
+        def valid_method_name?(method_name)
+          method_name.to_s.valid_encoding? && METHOD_NAME_PATTERN.match?(method_name) &&
+            !RESERVED_WORDS.include?(method_name)
         end
 
         def removal_argument_range(first_argument, second_argument)

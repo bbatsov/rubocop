@@ -192,6 +192,14 @@ RSpec.describe RuboCop::Cop::Style::SendWithLiteralMethodName, :config do
     end
   end
 
+  context 'when calling `public_send` with a string argument in an invalid encoding' do
+    it 'does not register an offense' do
+      expect_no_offenses(<<~'RUBY')
+        obj.public_send("\xF8")
+      RUBY
+    end
+  end
+
   context 'when calling `public_send` with a method name with a hyphen' do
     it 'does not register an offense' do
       expect_no_offenses(<<~RUBY)
