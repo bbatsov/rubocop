@@ -77,7 +77,9 @@ module RuboCop
         end
 
         def eligible_arguments?(node)
-          node.arguments? && node.arguments.to_a.all?(&:arg_type?)
+          return false unless node.arguments? && node.arguments.to_a.all?(&:arg_type?)
+
+          node.arguments.size <= target_args(node.method_name).size
         end
 
         def eligible_method?(node)
