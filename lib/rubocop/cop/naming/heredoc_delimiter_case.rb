@@ -41,7 +41,7 @@ module RuboCop
             expr = node.source_range
 
             corrector.replace(expr, correct_delimiters(expr.source))
-            corrector.replace(node.loc.heredoc_end, correct_delimiters(delimiter_string(expr)))
+            corrector.replace(node.loc.heredoc_end, correct_delimiters(node.loc.heredoc_end.source))
           end
         end
 
@@ -52,14 +52,18 @@ module RuboCop
         end
 
         def correct_case_delimiters?(node)
-          delimiters = delimiter_string(node)
+          delimiters = delimiter(node)
           delimiters == correct_delimiters(delimiters)
         end
 
         def corrected_delimiter_in_body?(node)
-          corrected = correct_delimiters(delimiter_string(node))
+          corrected = correct_delimiters(delimiter(node))
 
           node.loc.heredoc_body.source.each_line.any? { |line| line.strip == corrected }
+        end
+
+        def delimiter(node)
+          node.loc.heredoc_end.source.strip
         end
 
         def correct_delimiters(source)
