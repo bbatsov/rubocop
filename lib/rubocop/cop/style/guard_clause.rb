@@ -224,9 +224,7 @@ module RuboCop
         end
 
         def find_heredoc_argument(node)
-          return unless node
-
-          node = node.children.first while node.begin_type?
+          return unless (node = unwrap_begin(node))
           return node if heredoc?(node)
           return unless node.call_type?
 
@@ -236,6 +234,11 @@ module RuboCop
           end
 
           find_heredoc_argument(node.receiver)
+        end
+
+        def unwrap_begin(node)
+          node = node.children.first while node&.begin_type?
+          node
         end
 
         def close_multiline_guard_clause(corrector, range, heredoc, guard)
