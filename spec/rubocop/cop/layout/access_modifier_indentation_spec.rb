@@ -347,6 +347,41 @@ RSpec.describe RuboCop::Cop::Layout::AccessModifierIndentation, :config do
       RUBY
     end
 
+    it 'registers an offense and corrects private indented from `end` when `end` is not aligned with `class`' do
+      expect_offense(<<~RUBY)
+        x = class Foo
+          private
+          ^^^^^^^ Indent access modifiers like `private`.
+              def bar; end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        x = class Foo
+              private
+              def bar; end
+        end
+      RUBY
+    end
+
+    it 'accepts private indented from the `class` keyword when `end` is not aligned with `class`' do
+      expect_no_offenses(<<~RUBY)
+        x = class Foo
+              private
+              def bar; end
+        end
+      RUBY
+    end
+
+    it 'accepts private indented from `end` in a block when `end` is not aligned with the block start' do
+      expect_no_offenses(<<~RUBY)
+        x = Class.new do
+          private
+          def bar; end
+        end
+      RUBY
+    end
+
     context 'when 4 spaces per indent level are used' do
       let(:indentation_width) { 4 }
 
@@ -641,6 +676,23 @@ RSpec.describe RuboCop::Cop::Layout::AccessModifierIndentation, :config do
         protected
 
           def test; end
+        end
+      RUBY
+    end
+
+    it 'registers an offense and corrects private aligned with `end` when `end` is not aligned with `class`' do
+      expect_offense(<<~RUBY)
+        x = class Foo
+        private
+        ^^^^^^^ Outdent access modifiers like `private`.
+              def bar; end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        x = class Foo
+            private
+              def bar; end
         end
       RUBY
     end

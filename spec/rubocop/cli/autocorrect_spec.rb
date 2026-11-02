@@ -3638,6 +3638,31 @@ RSpec.describe 'RuboCop::CLI --autocorrect', :isolated_environment do # rubocop:
     RUBY
   end
 
+  it 'corrects `Layout/AccessModifierIndentation` and `Layout/IndentationWidth` when `end` is not aligned with `class`' do
+    create_file('example.rb', <<~RUBY)
+      x = class Foo
+        private
+        def bar; end
+        public
+        def baz; end
+      end
+    RUBY
+
+    expect(
+      cli.run(
+        ['--autocorrect-all', '--only', 'Layout/AccessModifierIndentation,Layout/IndentationWidth']
+      )
+    ).to eq(0)
+    expect(File.read('example.rb')).to eq(<<~RUBY)
+      x = class Foo
+            private
+            def bar; end
+            public
+            def baz; end
+      end
+    RUBY
+  end
+
   it 'corrects `Layout/EmptyLinesAroundBlockBody` with `EnforcedStyle: empty_lines` and `Style/EvalWithLocation` when the eval call ends the block body' do
     create_file('.rubocop.yml', <<~YAML)
       Layout/EmptyLinesAroundBlockBody:

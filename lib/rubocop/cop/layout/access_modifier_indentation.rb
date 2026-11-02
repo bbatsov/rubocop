@@ -57,17 +57,21 @@ module RuboCop
 
         def check_body(body, node)
           modifiers = body.each_child_node(:send).select(&:bare_access_modifier?)
-          end_range = node.loc.end
+          base_range = indentation_base_range(node)
 
           modifiers.each do |modifier|
             next if same_line?(node, modifier)
 
-            check_modifier(modifier, end_range)
+            check_modifier(modifier, base_range)
           end
         end
 
-        def check_modifier(send_node, end_range)
-          offset = column_offset_between(send_node.source_range, end_range)
+        def indentation_base_range(node)
+          node.any_block_type? ? node.loc.end : node.loc.keyword
+        end
+
+        def check_modifier(send_node, base_range)
+          offset = column_offset_between(send_node.source_range, base_range)
 
           @column_delta = expected_indent_offset - offset
           if @column_delta.zero?
