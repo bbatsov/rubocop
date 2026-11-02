@@ -197,6 +197,20 @@ RSpec.describe RuboCop::Cop::Style::Lambda, :config do
         end
       end
 
+      context 'with a lambda literal in a default value' do
+        it 'registers an offense and corrects both lambdas' do
+          expect_offense(<<~RUBY)
+            f = ->(x = ->(y) { y }) { x }
+                       ^^ Use the `lambda` method for all lambdas.
+                ^^ Use the `lambda` method for all lambdas.
+          RUBY
+
+          expect_correction(<<~RUBY)
+            f = lambda { |x = lambda { |y| y }| x }
+          RUBY
+        end
+      end
+
       context 'without argument parens and spaces' do
         it 'registers an offense' do
           expect_offense(<<~RUBY)
@@ -341,6 +355,20 @@ RSpec.describe RuboCop::Cop::Style::Lambda, :config do
 
           expect_correction(<<~RUBY)
             f = ->(x; y) { x }
+          RUBY
+        end
+      end
+
+      context 'with a lambda method call in a default value' do
+        it 'registers an offense and corrects both lambdas' do
+          expect_offense(<<~RUBY)
+            f = lambda { |x = lambda { |y| y }| x }
+                              ^^^^^^ Use the `-> { ... }` lambda literal syntax for all lambdas.
+                ^^^^^^ Use the `-> { ... }` lambda literal syntax for all lambdas.
+          RUBY
+
+          expect_correction(<<~RUBY)
+            f = ->(x = ->(y) { y }) { x }
           RUBY
         end
       end

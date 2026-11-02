@@ -76,11 +76,9 @@ module RuboCop
           return if uncorrectable_lambda_literal?(node)
 
           add_offense(node.send_node, message: message(node, selector)) do |corrector|
-            if node.send_node.lambda_literal?
-              LambdaLiteralToMethodCorrector.new(node).call(corrector)
-            else
-              autocorrect_method_to_literal(corrector, node)
-            end
+            next if node.each_ancestor.any? { |ancestor| ignored_node?(ancestor) }
+
+            autocorrect(corrector, node)
           end
         end
         alias on_numblock on_block
@@ -122,6 +120,16 @@ module RuboCop
           else
             'all'
           end
+        end
+
+        def autocorrect(corrector, node)
+          if node.send_node.lambda_literal?
+            LambdaLiteralToMethodCorrector.new(node).call(corrector)
+          else
+            autocorrect_method_to_literal(corrector, node)
+          end
+
+          ignore_node(node.arguments) if node.arguments?
         end
 
         def autocorrect_method_to_literal(corrector, node)
