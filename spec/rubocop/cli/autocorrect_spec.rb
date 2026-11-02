@@ -2245,6 +2245,52 @@ RSpec.describe 'RuboCop::CLI --autocorrect', :isolated_environment do # rubocop:
     RUBY
   end
 
+  it 'corrects `Style/ExplicitBlockArgument` with `Style/MethodCallWithArgsParentheses`' do
+    create_file('example.rb', <<~RUBY)
+      def foo
+        bar Baz.new 1 do
+          yield
+        end
+      end
+    RUBY
+
+    expect(
+      cli.run(
+        [
+          '--autocorrect-all',
+          '--only', 'Style/ExplicitBlockArgument,Style/MethodCallWithArgsParentheses'
+        ]
+      )
+    ).to eq(0)
+    expect(File.read('example.rb')).to eq(<<~RUBY)
+      def foo(&block)
+        bar(Baz.new(1), &block)
+      end
+    RUBY
+  end
+
+  it 'corrects `Style/ExplicitBlockArgument` with `Style/NestedParenthesizedCalls`' do
+    create_file('example.rb', <<~RUBY)
+      def foo
+        bar(Baz.new 1) { yield }
+      end
+    RUBY
+
+    expect(
+      cli.run(
+        [
+          '--autocorrect-all',
+          '--only', 'Style/ExplicitBlockArgument,Style/NestedParenthesizedCalls'
+        ]
+      )
+    ).to eq(0)
+    expect(File.read('example.rb')).to eq(<<~RUBY)
+      def foo(&block)
+        bar(Baz.new(1), &block)
+      end
+    RUBY
+  end
+
   it 'corrects `Style/ExplicitBlockArgument` with `EnforcedStyleForMultiline: consistent_comma` of `Style/TrailingCommaInArguments`' do
     create_file('.rubocop.yml', <<~YAML)
       Style/TrailingCommaInArguments:

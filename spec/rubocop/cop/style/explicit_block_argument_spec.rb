@@ -31,6 +31,40 @@ RSpec.describe RuboCop::Cop::Style::ExplicitBlockArgument, :config do
     RUBY
   end
 
+  it 'registers an offense and corrects when the last argument is a method call without parentheses' do
+    expect_offense(<<~RUBY)
+      def m
+        foo Bar.new 1, 2 do
+        ^^^^^^^^^^^^^^^^^^^ Consider using explicit block argument in the surrounding method's signature over `yield`.
+          yield
+        end
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      def m(&block)
+        foo Bar.new(1, 2), &block
+      end
+    RUBY
+  end
+
+  it 'registers an offense and corrects when the last argument is an operator method call' do
+    expect_offense(<<~RUBY)
+      def m
+        foo a + b do
+        ^^^^^^^^^^^^ Consider using explicit block argument in the surrounding method's signature over `yield`.
+          yield
+        end
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      def m(&block)
+        foo a + b, &block
+      end
+    RUBY
+  end
+
   it 'does not register an offense when arguments are yielded in a different order' do
     expect_no_offenses(<<~RUBY)
       def m
