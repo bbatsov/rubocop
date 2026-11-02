@@ -74,4 +74,21 @@ RSpec.describe RuboCop::Cop::Layout::InitialIndentation, :config do
       x = 1
     RUBY
   end
+
+  it 'accepts an unindented string literal whose value starts with `#`' do
+    expect_no_offenses(<<~RUBY)
+      '#foo' if bar
+    RUBY
+  end
+
+  it 'registers an offense and corrects an indented string literal whose value starts with `#`' do
+    expect_offense(<<-RUBY.strip_margin('|'))
+    |  '#foo' if bar
+    |  ^^^^^^ Indentation of first line in file detected.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      '#foo' if bar
+    RUBY
+  end
 end
