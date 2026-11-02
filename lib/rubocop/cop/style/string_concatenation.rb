@@ -131,6 +131,7 @@ module RuboCop
         end
 
         def heredoc?(node)
+          return node.children.any? { |child| heredoc?(child) } if node.begin_type?
           return false unless node.type?(:str, :dstr)
 
           node.heredoc?
