@@ -199,6 +199,43 @@ RSpec.describe RuboCop::Cop::Style::RedundantInterpolation, :config do
     RUBY
   end
 
+  it 'registers offenses for a nested interpolation in an argument of a method call without parentheses' do
+    expect_offense(<<~'RUBY')
+      "#{do_something foo, "#{bar}"}"
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Prefer `to_s` over string interpolation.
+                           ^^^^^^^^ Prefer `to_s` over string interpolation.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      do_something(foo, bar.to_s).to_s
+    RUBY
+  end
+
+  it 'registers offenses for a nested interpolation in an argument of a method call with parentheses' do
+    expect_offense(<<~'RUBY')
+      "#{do_something(foo, "#{bar}")}"
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Prefer `to_s` over string interpolation.
+                           ^^^^^^^^ Prefer `to_s` over string interpolation.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      do_something(foo, bar.to_s).to_s
+    RUBY
+  end
+
+  it 'registers an offense and keeps the arguments of a multiline method call without parentheses' do
+    expect_offense(<<~'RUBY')
+      "#{do_something foo, # comment
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Prefer `to_s` over string interpolation.
+        bar}"
+    RUBY
+
+    expect_correction(<<~RUBY)
+      do_something(foo, # comment
+        bar).to_s
+    RUBY
+  end
+
   it 'registers an offense for "#{var}"' do
     expect_offense(<<~'RUBY')
       var = 1; "#{var}"
