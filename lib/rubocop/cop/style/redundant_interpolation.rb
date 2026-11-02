@@ -50,7 +50,7 @@ module RuboCop
           return unless single_interpolation?(node)
 
           embedded_node = node.children.first
-          return if use_match_pattern?(embedded_node)
+          return if void_value?(embedded_node)
 
           add_offense(node) do |corrector|
             if variable_interpolation?(embedded_node)
@@ -72,12 +72,29 @@ module RuboCop
             !embedded_in_percent_array?(node)
         end
 
-        def use_match_pattern?(node)
-          return false if target_ruby_version <= 2.7
+        def void_value?(node)
+          return false unless node
+          return true if node.type?(:return, :break, :next, :redo, :retry)
+          return target_ruby_version >= 3.0 if node.match_pattern_type?
 
-          node.children.any? do |child|
-            child.respond_to?(:match_pattern_type?) && child.match_pattern_type?
+          void_compound_statement?(node)
+        end
+
+        def void_compound_statement?(node)
+          case node.type
+          when :begin, :kwbegin then void_value?(node.children.last)
+          when :if then void_value?(node.if_branch) && void_value?(node.else_branch)
+          when :rescue then rescue_void_value?(node)
+          when :ensure then void_value?(node.children.first) || void_value?(node.branch)
+          else false
           end
+        end
+
+        def rescue_void_value?(node)
+          return false unless void_value?(node.body)
+          return void_value?(node.else_branch) if node.else?
+
+          node.resbody_branches.all? { |resbody| void_value?(resbody.body) }
         end
 
         def single_variable_interpolation?(node)
