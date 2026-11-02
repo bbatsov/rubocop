@@ -48,7 +48,7 @@ module RuboCop
           add_offense(node.lhs) do |corrector|
             # Don't autocorrect `'foo' && return` because having `return` as
             # the leftmost node can lead to a void value expression syntax error.
-            next if void_value_expression?(node.rhs)
+            next if void_value_expression?(node.rhs) || part_of_ignored_node?(node)
 
             corrector.replace(node, node.rhs.source)
           end
@@ -60,7 +60,7 @@ module RuboCop
           add_offense(node.lhs) do |corrector|
             # Don't autocorrect `'foo' && return` because having `return` as
             # the leftmost node can lead to a void value expression syntax error.
-            next if void_value_expression?(node.rhs)
+            next if void_value_expression?(node.rhs) || part_of_ignored_node?(node)
 
             corrector.replace(node, node.rhs.source)
           end

@@ -811,6 +811,38 @@ RSpec.describe RuboCop::Cop::Lint::LiteralAsCondition, :config do
     end
   end
 
+  context 'when an `elsif` condition with a literal operand belongs to a corrected `if`' do
+    it 'registers an offense and corrects with `||`' do
+      expect_offense(<<~RUBY)
+        if false then foo
+           ^^^^^ Literal `false` appeared as a condition.
+        elsif false || x then bar
+              ^^^^^ Literal `false` appeared as a condition.
+        end
+      RUBY
+
+      expect_correction(<<~RUBY, loop: false)
+        if false || x then bar
+        end
+      RUBY
+    end
+
+    it 'registers an offense and corrects with `&&`' do
+      expect_offense(<<~RUBY)
+        if false then foo
+           ^^^^^ Literal `false` appeared as a condition.
+        elsif true && x then bar
+              ^^^^ Literal `true` appeared as a condition.
+        end
+      RUBY
+
+      expect_correction(<<~RUBY, loop: false)
+        if true && x then bar
+        end
+      RUBY
+    end
+  end
+
   context 'when a post-loop that runs once uses loop control keywords' do
     it 'registers an offense but does not autocorrect `redo` and `break` in `while`' do
       expect_offense(<<~RUBY)
