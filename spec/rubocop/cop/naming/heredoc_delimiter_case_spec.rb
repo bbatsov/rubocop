@@ -82,6 +82,36 @@ RSpec.describe RuboCop::Cop::Naming::HeredocDelimiterCase, :config do
             SQL
           RUBY
         end
+
+        it 'registers an offense and corrects a delimiter containing a double quote' do
+          expect_offense(<<~RUBY)
+            <<-'sql"x'
+              foo
+            sql"x
+            ^^^^^ Use uppercase heredoc delimiters.
+          RUBY
+
+          expect_correction(<<~RUBY)
+            <<-'SQL"X'
+              foo
+            SQL"X
+          RUBY
+        end
+
+        it 'registers an offense when only the part after a double quote is not uppercase' do
+          expect_offense(<<~RUBY)
+            <<-'SQL"x'
+              foo
+            SQL"x
+            ^^^^^ Use uppercase heredoc delimiters.
+          RUBY
+
+          expect_correction(<<~RUBY)
+            <<-'SQL"X'
+              foo
+            SQL"X
+          RUBY
+        end
       end
 
       context 'when using double quoted delimiters' do
