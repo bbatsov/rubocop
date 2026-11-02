@@ -187,7 +187,7 @@ module RuboCop
           return if node.single_line? || style == :allow_always
 
           add_offense(node, message: MSG_MULTI_LINE) do |corrector|
-            next if endless_parent?(node)
+            next if nested_in_multiline_correction?(node)
 
             correct_to_multiline(corrector, node)
           end
@@ -196,10 +196,14 @@ module RuboCop
         def handle_require_single_line_style(node)
           if node.endless? && node.multiline?
             add_offense(node, message: MSG_MULTI_LINE) do |corrector|
+              next if nested_in_multiline_correction?(node)
+
               correct_to_multiline(corrector, node)
             end
           elsif convertible_to_endless?(node) && single_line_when_made_endless?(node)
             add_offense(node, message: MSG_REQUIRE_SINGLE) do |corrector|
+              next if nested_in_multiline_correction?(node)
+
               correct_to_endless(corrector, node)
             end
           end
@@ -222,14 +226,29 @@ module RuboCop
           return unless node.endless?
 
           add_offense(node) do |corrector|
-            next if endless_parent?(node)
+            next if nested_in_multiline_correction?(node)
 
             correct_to_multiline(corrector, node)
           end
         end
 
-        def endless_parent?(node)
-          node.parent&.any_def_type? && node.parent.endless?
+        def nested_in_multiline_correction?(node)
+          node.each_ancestor(:any_def).any? do |ancestor|
+            corrected_to_multiline?(ancestor)
+          end
+        end
+
+        def corrected_to_multiline?(node)
+          return false if !node.endless? || use_heredoc?(node)
+
+          case style
+          when :disallow
+            true
+          when :allow_single_line, :require_single_line
+            node.multiline?
+          else
+            false
+          end
         end
 
         def use_heredoc?(node)
