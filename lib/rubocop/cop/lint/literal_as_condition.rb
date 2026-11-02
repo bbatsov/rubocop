@@ -35,7 +35,7 @@ module RuboCop
       #   while true
       #     break if condition
       #   end
-      class LiteralAsCondition < Base
+      class LiteralAsCondition < Base # rubocop:disable Metrics/ClassLength
         include RangeHelp
         extend AutoCorrector
 
@@ -50,7 +50,7 @@ module RuboCop
             # the leftmost node can lead to a void value expression syntax error.
             next if void_value_expression?(node.rhs)
 
-            corrector.replace(node, node.rhs.source)
+            replace_node(corrector, node, node.rhs.source)
           end
         end
 
@@ -62,7 +62,7 @@ module RuboCop
             # the leftmost node can lead to a void value expression syntax error.
             next if void_value_expression?(node.rhs)
 
-            corrector.replace(node, node.rhs.source)
+            replace_node(corrector, node, node.rhs.source)
           end
         end
 
@@ -79,11 +79,11 @@ module RuboCop
 
           if node.condition.truthy_literal?
             add_offense(node.condition) do |corrector|
-              corrector.replace(node.condition, 'true')
+              replace_node(corrector, node.condition, 'true')
             end
           elsif node.condition.falsey_literal?
             add_offense(node.condition) do |corrector|
-              corrector.remove(node)
+              replace_node(corrector, node, '')
             end
           end
         end
@@ -94,13 +94,13 @@ module RuboCop
 
           if node.condition.truthy_literal?
             add_offense(node.condition) do |corrector|
-              corrector.replace(node, node.source.sub(node.condition.source, 'true'))
+              replace_node(corrector, node, node.source.sub(node.condition.source, 'true'))
             end
           elsif node.condition.falsey_literal?
             add_offense(node.condition) do |corrector|
               next if orphans_loop_control_keyword?(node)
 
-              corrector.replace(node, node.body.child_nodes.map(&:source).join("\n"))
+              replace_node(corrector, node, node.body.child_nodes.map(&:source).join("\n"))
             end
           end
         end
@@ -110,11 +110,11 @@ module RuboCop
 
           if node.condition.falsey_literal?
             add_offense(node.condition) do |corrector|
-              corrector.replace(node.condition, 'false')
+              replace_node(corrector, node.condition, 'false')
             end
           elsif node.condition.truthy_literal?
             add_offense(node.condition) do |corrector|
-              corrector.remove(node)
+              replace_node(corrector, node, '')
             end
           end
         end
@@ -125,13 +125,13 @@ module RuboCop
 
           if node.condition.falsey_literal?
             add_offense(node.condition) do |corrector|
-              corrector.replace(node, node.source.sub(node.condition.source, 'false'))
+              replace_node(corrector, node, node.source.sub(node.condition.source, 'false'))
             end
           elsif node.condition.truthy_literal?
             add_offense(node.condition) do |corrector|
               next if orphans_loop_control_keyword?(node)
 
-              corrector.replace(node, node.body.child_nodes.map(&:source).join("\n"))
+              replace_node(corrector, node, node.body.child_nodes.map(&:source).join("\n"))
             end
           end
         end
@@ -293,12 +293,15 @@ module RuboCop
                      end
 
           add_offense(cond) do |corrector|
-            next if part_of_ignored_node?(node)
-
-            corrector.replace(node, new_node)
-
-            ignore_node(node)
+            replace_node(corrector, node, new_node)
           end
+        end
+
+        def replace_node(corrector, node, replacement)
+          return if node.each_ancestor.any? { |ancestor| ignored_node?(ancestor) }
+
+          corrector.replace(node, replacement)
+          ignore_node(node)
         end
       end
     end

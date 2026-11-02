@@ -850,6 +850,76 @@ RSpec.describe RuboCop::Cop::Lint::LiteralAsCondition, :config do
     end
   end
 
+  context 'when a literal condition is nested in a node that is corrected' do
+    it 'registers offenses and corrects a falsey literal in `||` of the `elsif` condition' do
+      expect_offense(<<~RUBY)
+        if false
+           ^^^^^ Literal `false` appeared as a condition.
+          foo
+        elsif nil || bar
+              ^^^ Literal `nil` appeared as a condition.
+          baz
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        if bar
+          baz
+        end
+      RUBY
+    end
+
+    it 'registers offenses and corrects a truthy literal in `&&` of the `else` branch' do
+      expect_offense(<<~RUBY)
+        if false
+           ^^^^^ Literal `false` appeared as a condition.
+          foo
+        else
+          bar if baz && (true && qux)
+                         ^^^^ Literal `true` appeared as a condition.
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        bar if baz && (qux)
+      RUBY
+    end
+
+    it 'registers offenses and corrects a literal `while` condition in the `else` branch' do
+      expect_offense(<<~RUBY)
+        if false
+           ^^^^^ Literal `false` appeared as a condition.
+          foo
+        else
+          while 1
+                ^ Literal `1` appeared as a condition.
+            bar
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        while true
+            bar
+          end
+      RUBY
+    end
+
+    it 'registers offenses and corrects a literal `if` condition in a removed `while`' do
+      expect_offense(<<~RUBY)
+        while false
+              ^^^^^ Literal `false` appeared as a condition.
+          foo if true
+                 ^^^^ Literal `true` appeared as a condition.
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+
+      RUBY
+    end
+  end
+
   context 'void value expressions after autocorrect' do
     it 'registers an offense but does not autocorrect when `return` is used after `&&`' do
       expect_offense(<<~RUBY)
