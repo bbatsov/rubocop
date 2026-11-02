@@ -199,7 +199,7 @@ module RuboCop
           return unless base_receiver.hash_type?
 
           first_call = first_call_has_a_dot(node)
-          first_call.loc.dot.join(first_call.loc.selector)
+          dot_with_method_name(first_call)
         end
 
         def first_dot_alignment_base(node, rhs)
@@ -215,7 +215,7 @@ module RuboCop
 
           return unless same_line?(dot, first_call.receiver.source_range)
 
-          dot.join(first_call.loc.selector)
+          dot_with_method_name(first_call)
         end
 
         def after_multiline_block_base(first_call, node)
@@ -224,7 +224,7 @@ module RuboCop
           after_block = first_call.block_node.parent
           return unless after_block&.call_type? && after_block.loc?(:dot) && after_block != node
 
-          after_block.loc.dot.join(after_block.loc.selector)
+          dot_with_method_name(after_block)
         end
 
         def inside_multiline_chain_arg?(node)
@@ -381,11 +381,15 @@ module RuboCop
           while receiver_chain&.call_type?
             base_receiver = unwrap_block_node(receiver_chain.receiver)
             if alignment_base_for_chained_receiver?(receiver_chain, base_receiver)
-              return receiver_chain.loc.dot.join(receiver_chain.loc.selector)
+              return dot_with_method_name(receiver_chain)
             end
 
             receiver_chain = base_receiver
           end
+        end
+
+        def dot_with_method_name(node)
+          node.loc.dot.join(node.loc.selector || node.loc.begin)
         end
 
         def alignment_base_for_chained_receiver?(receiver_chain, base_receiver)
