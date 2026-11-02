@@ -128,7 +128,7 @@ module RuboCop
         end
 
         def ternary_style_autocorrect(node, outcome, keyword)
-          return if outcome.multiline?
+          return if outcome.nil? || outcome.multiline?
 
           add_offense(node, message: MSG_TERNARY) do |corrector|
             next if empty_string_conditional_in_condition?(node)
