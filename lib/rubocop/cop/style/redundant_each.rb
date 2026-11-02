@@ -85,7 +85,7 @@ module RuboCop
         def range(node)
           return node.selector unless node.method?(:each)
 
-          if node.parent&.call_type?
+          if receiver_of_dot_call?(node)
             node.selector.join(node.parent.loc.dot)
           else
             node.loc.dot.join(node.selector)
@@ -111,6 +111,13 @@ module RuboCop
           elsif redundant_node.method?(:each_with_object)
             corrector.replace(redundant_node.loc.selector, 'each.with_object')
           end
+        end
+
+        def receiver_of_dot_call?(node)
+          parent = node.parent
+          return false unless parent&.call_type?
+
+          parent.receiver.equal?(node) && parent.loc?(:dot)
         end
       end
     end

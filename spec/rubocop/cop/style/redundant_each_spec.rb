@@ -126,6 +126,28 @@ RSpec.describe RuboCop::Cop::Style::RedundantEach, :config do
     RUBY
   end
 
+  it 'registers an offense when using `reverse_each.each` as a method argument' do
+    expect_offense(<<~RUBY)
+      foo(bar.reverse_each.each)
+                          ^^^^^ Remove redundant `each`.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      foo(bar.reverse_each)
+    RUBY
+  end
+
+  it 'registers an offense when using `reverse_each.each` as the receiver of an operator' do
+    expect_offense(<<~RUBY)
+      foo.reverse_each.each + bar
+                      ^^^^^ Remove redundant `each`.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      foo.reverse_each + bar
+    RUBY
+  end
+
   it 'registers an offense when using `reverse_each&.each`' do
     expect_offense(<<~RUBY)
       context.reverse_each&.each { |i| do_something(i) }
