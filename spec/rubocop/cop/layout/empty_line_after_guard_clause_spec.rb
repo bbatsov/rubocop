@@ -839,6 +839,46 @@ RSpec.describe RuboCop::Cop::Layout::EmptyLineAfterGuardClause, :config do
     RUBY
   end
 
+  it 'does not register an offense when a guard clause is followed by another argument' do
+    expect_no_offenses(<<~RUBY)
+      foo(
+        if bar
+          raise baz
+        end,
+        qux
+      )
+    RUBY
+  end
+
+  it 'does not register an offense when a guard clause is followed by another array element' do
+    expect_no_offenses(<<~RUBY)
+      [
+        if bar
+          raise baz
+        end,
+        qux
+      ]
+    RUBY
+  end
+
+  it 'registers an offense for a guard clause followed by another statement in `begin`' do
+    expect_offense(<<~RUBY)
+      begin
+        return if foo
+        ^^^^^^^^^^^^^ Add empty line after guard clause.
+        bar
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      begin
+        return if foo
+
+        bar
+      end
+    RUBY
+  end
+
   it 'does not register an offense when there are multiple clauses on the same line' do
     expect_no_offenses(<<~RUBY)
       def foo(item)
