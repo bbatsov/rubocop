@@ -115,6 +115,7 @@ module RuboCop
         MSG = 'Move `%<source>s` out of the conditional.'
 
         STATEMENT_BODY_TYPES = %i[kwbegin block numblock itblock ensure].freeze
+        VOID_VALUE_TYPES = %i[return break next redo retry].freeze
 
         def on_if(node)
           return if node.elsif?
@@ -201,6 +202,7 @@ module RuboCop
           expressions.each do |expression|
             add_offense(expression) do |corrector|
               next unless hoistable
+              next if void_value_position?(node, expression, insert_position)
 
               corrector.remove(removal_range(expression))
               next if inserted_expression
@@ -258,6 +260,33 @@ module RuboCop
           else
             false
           end
+        end
+
+        def void_value_position?(node, expression, insert_position)
+          return false if insert_position != :after_condition
+          return false unless value_position?(node)
+
+          jump?(expression)
+        end
+
+        def value_position?(node)
+          parent = node.parent
+          return false unless parent
+          return true if parent.assignment?
+          return false unless explicit_begin?(parent)
+
+          node.value_used?
+        end
+
+        def explicit_begin?(node)
+          node.kwbegin_type? || (node.begin_type? && !node.loc.begin.nil?)
+        end
+
+        def jump?(node)
+          return true if node.type?(*VOID_VALUE_TYPES)
+          return false if node.type?(:any_block, :any_def)
+
+          node.each_child_node.any? { |child| jump?(child) }
         end
 
         def removal_range(expression)
