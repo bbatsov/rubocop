@@ -59,7 +59,7 @@ module RuboCop
           return unless last_replaceable_node
           return unless arguments.size > 1
 
-          range = last_replaceable_node.selector.join(node.loc.end)
+          range = last_replaceable_node.selector.join(node.source_range.end)
           replacement = replacement(arguments)
           message = format(MSG, replacement: replacement)
 
