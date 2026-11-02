@@ -254,6 +254,17 @@ RSpec.describe RuboCop::Cop::Style::StringConcatenation, :config do
 
       expect_no_corrections
     end
+
+    it 'registers an offense but does not correct when the heredoc is parenthesized' do
+      expect_offense(<<~RUBY)
+        (<<-STRING) + 'bar'
+        ^^^^^^^^^^^^^^^^^^^ Prefer string interpolation to string concatenation.
+          foo
+        STRING
+      RUBY
+
+      expect_no_corrections
+    end
   end
 
   context 'with `__FILE__`' do
