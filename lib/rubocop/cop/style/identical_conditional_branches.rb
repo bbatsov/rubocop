@@ -109,9 +109,12 @@ module RuboCop
       #   end
       class IdenticalConditionalBranches < Base
         include RangeHelp
+        include RescueNode
         extend AutoCorrector
 
         MSG = 'Move `%<source>s` out of the conditional.'
+
+        STATEMENT_BODY_TYPES = %i[kwbegin block numblock itblock ensure].freeze
 
         def on_if(node)
           return if node.elsif?
@@ -193,10 +196,11 @@ module RuboCop
           return if expressions.any?(&:nil?)
 
           inserted_expression = false
+          hoistable = hoistable?(node)
 
           expressions.each do |expression|
             add_offense(expression) do |corrector|
-              next if node.if_type? && (node.ternary? || node.then?)
+              next unless hoistable
 
               corrector.remove(removal_range(expression))
               next if inserted_expression
@@ -209,6 +213,50 @@ module RuboCop
 
               inserted_expression = true
             end
+          end
+        end
+
+        def hoistable?(node)
+          return false if node.if_type? && (node.ternary? || node.then?)
+
+          statement?(node.parent&.assignment? ? node.parent : node)
+        end
+
+        def statement?(node)
+          parent = node.parent
+          return true if parent.nil? || parent.type?(*STATEMENT_BODY_TYPES)
+          return false if inline_form?(parent)
+
+          statement_branch?(node, parent)
+        end
+
+        def inline_form?(node)
+          case node.type
+          when :def, :defs
+            node.endless?
+          when :if, :while, :until
+            node.modifier_form?
+          when :rescue
+            rescue_modifier?(node.resbody_branches.first)
+          when :resbody
+            rescue_modifier?(node)
+          else
+            false
+          end
+        end
+
+        def statement_branch?(node, parent)
+          case parent.type
+          when :begin, :def, :defs, :rescue, :resbody
+            true
+          when :if
+            !parent.ternary? && !node.equal?(parent.condition)
+          when :class, :module, :sclass, :when, :in_pattern, :for, :while, :until
+            node.equal?(parent.body)
+          when :case, :case_match
+            node.equal?(parent.else_branch)
+          else
+            false
           end
         end
 

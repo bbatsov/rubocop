@@ -825,6 +825,209 @@ RSpec.describe RuboCop::Cop::Style::IdenticalConditionalBranches, :config do
     end
   end
 
+  context 'when the conditional is used as a method argument' do
+    it 'registers an offense but does not correct' do
+      expect_offense(<<~RUBY)
+        foo(if condition
+              do_x
+              do_z
+              ^^^^ Move `do_z` out of the conditional.
+            else
+              do_y
+              do_z
+              ^^^^ Move `do_z` out of the conditional.
+            end)
+      RUBY
+
+      expect_no_corrections
+    end
+  end
+
+  context 'when the conditional is an array element' do
+    it 'registers an offense but does not correct' do
+      expect_offense(<<~RUBY)
+        [if condition
+           do_z
+           ^^^^ Move `do_z` out of the conditional.
+           do_x
+         else
+           do_z
+           ^^^^ Move `do_z` out of the conditional.
+           do_y
+         end]
+      RUBY
+
+      expect_no_corrections
+    end
+  end
+
+  context 'when the assignment of the conditional is used as a method argument' do
+    it 'registers an offense but does not correct' do
+      expect_offense(<<~RUBY)
+        foo(x = case condition
+                when 1
+                  do_z
+                  ^^^^ Move `do_z` out of the conditional.
+                  do_x
+                else
+                  do_z
+                  ^^^^ Move `do_z` out of the conditional.
+                  do_y
+                end)
+      RUBY
+
+      expect_no_corrections
+    end
+  end
+
+  context 'when the conditional is interpolated' do
+    it 'registers and corrects an offense' do
+      expect_offense(<<~'RUBY')
+        "#{if condition
+             do_x
+             do_z
+             ^^^^ Move `do_z` out of the conditional.
+           else
+             do_y
+             do_z
+             ^^^^ Move `do_z` out of the conditional.
+           end}"
+      RUBY
+
+      expect_correction(<<~'RUBY')
+        "#{if condition
+             do_x
+           else
+             do_y
+           end
+           do_z}"
+      RUBY
+    end
+  end
+
+  context 'when the conditional is parenthesized' do
+    it 'registers and corrects an offense' do
+      expect_offense(<<~RUBY)
+        foo = 1 if (if condition
+                      do_z
+                      ^^^^ Move `do_z` out of the conditional.
+                      do_x
+                    else
+                      do_z
+                      ^^^^ Move `do_z` out of the conditional.
+                      do_y
+                    end)
+      RUBY
+
+      expect_correction(<<~RUBY)
+        foo = 1 if (do_z
+                    if condition
+                      do_x
+                    else
+                      do_y
+                    end)
+      RUBY
+    end
+  end
+
+  context 'when the conditional is the body of a `rescue` modifier' do
+    it 'registers an offense but does not correct' do
+      expect_offense(<<~RUBY)
+        if condition
+          do_x
+          do_z
+          ^^^^ Move `do_z` out of the conditional.
+        else
+          do_y
+          do_z
+          ^^^^ Move `do_z` out of the conditional.
+        end rescue nil
+      RUBY
+
+      expect_no_corrections
+    end
+  end
+
+  context 'when the conditional is the body of an endless method' do
+    it 'registers an offense but does not correct', :ruby30 do
+      expect_offense(<<~RUBY)
+        def foo = if condition
+                    do_z
+                    ^^^^ Move `do_z` out of the conditional.
+                    do_x
+                  else
+                    do_z
+                    ^^^^ Move `do_z` out of the conditional.
+                    do_y
+                  end
+      RUBY
+
+      expect_no_corrections
+    end
+  end
+
+  context 'when the conditional is the body of a `rescue` clause' do
+    it 'registers and corrects an offense' do
+      expect_offense(<<~RUBY)
+        begin
+          foo
+        rescue
+          if condition
+            do_x
+            do_z
+            ^^^^ Move `do_z` out of the conditional.
+          else
+            do_y
+            do_z
+            ^^^^ Move `do_z` out of the conditional.
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        begin
+          foo
+        rescue
+          if condition
+            do_x
+          else
+            do_y
+          end
+          do_z
+        end
+      RUBY
+    end
+  end
+
+  context 'when the conditional is the body of a block' do
+    it 'registers and corrects an offense' do
+      expect_offense(<<~RUBY)
+        foo do
+          if condition
+            do_z
+            ^^^^ Move `do_z` out of the conditional.
+            do_x
+          else
+            do_z
+            ^^^^ Move `do_z` out of the conditional.
+            do_y
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        foo do
+          do_z
+          if condition
+            do_x
+          else
+            do_y
+          end
+        end
+      RUBY
+    end
+  end
+
   context 'with empty parentheses' do
     it 'does not raise any error when using empty brace in the both parentheses' do
       expect_no_offenses(<<~RUBY)
