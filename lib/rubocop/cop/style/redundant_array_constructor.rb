@@ -67,8 +67,11 @@ module RuboCop
         private
 
         def register_offense(range, node, replacement)
+          replacement = replacement.source_range if replacement.is_a?(AST::Node)
+
           add_offense(range) do |corrector|
-            corrector.replace(node, replacement.source)
+            corrector.remove(node.source_range.begin.join(replacement.begin))
+            corrector.remove(replacement.end.join(node.source_range.end))
           end
         end
       end

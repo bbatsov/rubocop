@@ -89,6 +89,42 @@ RSpec.describe RuboCop::Cop::Style::RedundantArrayConstructor, :config do
     RUBY
   end
 
+  it 'registers an offense when `Array[]` is nested in `Array[]`' do
+    expect_offense(<<~RUBY)
+      Array[Array[Integer]]
+            ^^^^^ Remove the redundant `Array` constructor.
+      ^^^^^ Remove the redundant `Array` constructor.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      [[Integer]]
+    RUBY
+  end
+
+  it 'registers an offense when `Array.new` is nested in `Array.new`' do
+    expect_offense(<<~RUBY)
+      Array.new([Array.new([1])])
+                 ^^^^^^^^^ Remove the redundant `Array` constructor.
+      ^^^^^^^^^ Remove the redundant `Array` constructor.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      [[1]]
+    RUBY
+  end
+
+  it 'registers an offense when `Array([])` is nested in `Array([])`' do
+    expect_offense(<<~RUBY)
+      Array([Array([1])])
+             ^^^^^ Remove the redundant `Array` constructor.
+      ^^^^^ Remove the redundant `Array` constructor.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      [[1]]
+    RUBY
+  end
+
   it 'does not register an offense when using an array literal' do
     expect_no_offenses(<<~RUBY)
       []
