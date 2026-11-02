@@ -31,6 +31,22 @@ RSpec.describe RuboCop::Cop::Style::EndlessMethod, :config do
         RUBY
       end
 
+      it 'registers an offense and corrects an endless method definition nested in a method call argument' do
+        expect_offense(<<~RUBY)
+          def a = foo(def b = 1)
+          ^^^^^^^^^^^^^^^^^^^^^^ Avoid endless method definitions.
+                      ^^^^^^^^^ Avoid endless method definitions.
+        RUBY
+
+        expect_correction(<<~RUBY)
+          def a
+            foo(def b
+                  1
+                end)
+          end
+        RUBY
+      end
+
       it 'registers an offense for an endless method' do
         expect_offense(<<~RUBY)
           def my_method() = x
@@ -263,6 +279,34 @@ RSpec.describe RuboCop::Cop::Style::EndlessMethod, :config do
 
     context 'EnforcedStyle: require_single_line' do
       let(:cop_config) { { 'EnforcedStyle' => 'require_single_line' } }
+
+      it 'registers an offense and corrects a method definition nested in a multiline endless method' do
+        expect_offense(<<~RUBY)
+          def a = def b
+          ^^^^^^^^^^^^^ Avoid endless method definitions with multiple lines.
+                  ^^^^^ Use endless method definitions for single line methods.
+            1
+          end
+        RUBY
+
+        expect_correction(<<~RUBY)
+          def a = def b = 1
+        RUBY
+      end
+
+      it 'registers an offense and corrects a method definition passed as an argument in a multiline endless method' do
+        expect_offense(<<~RUBY)
+          def a = foo(def b
+          ^^^^^^^^^^^^^^^^^ Avoid endless method definitions with multiple lines.
+                      ^^^^^ Use endless method definitions for single line methods.
+            1
+          end)
+        RUBY
+
+        expect_correction(<<~RUBY)
+          def a = foo(def b = 1)
+        RUBY
+      end
 
       it 'does not register an offense when the body is a modifier `if`' do
         expect_no_offenses(<<~RUBY)
