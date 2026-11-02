@@ -333,6 +333,24 @@ RSpec.describe RuboCop::Cop::Layout::EmptyLinesAroundExceptionHandlingKeywords, 
     RUBY
   end
 
+  it 'registers an offense for an empty line between the beginning of a block and `rescue`' do
+    expect_offense(<<~RUBY)
+      do_something do
+
+      #{message} before the `rescue`.
+      rescue
+        foo
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      do_something do
+      rescue
+        foo
+      end
+    RUBY
+  end
+
   context 'when `Layout/EmptyLinesAroundBlockBody` is `EnforcedStyle: empty_lines`' do
     let(:other_cops) do
       { 'Layout/EmptyLinesAroundBlockBody' => { 'EnforcedStyle' => 'empty_lines' } }
@@ -345,6 +363,79 @@ RSpec.describe RuboCop::Cop::Layout::EmptyLinesAroundExceptionHandlingKeywords, 
 
       end
     RUBY
+
+    it_behaves_like 'accepts', 'an empty line between the beginning of a block and `rescue`', <<~RUBY
+      do_something do |foo|
+
+      rescue
+        bar
+      end
+    RUBY
+
+    it_behaves_like 'accepts', 'an empty line between multiline block arguments and `ensure`', <<~RUBY
+      do_something do |foo,
+                       bar|
+
+      ensure
+        baz
+      end
+    RUBY
+
+    it 'registers an offense for an empty line between the beginning of a method definition and `rescue`' do
+      expect_offense(<<~RUBY)
+        def do_something
+
+        #{message} before the `rescue`.
+        rescue
+          foo
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        def do_something
+        rescue
+          foo
+        end
+      RUBY
+    end
+
+    it 'registers an offense for an empty line between the beginning of a `begin` block and `rescue`' do
+      expect_offense(<<~RUBY)
+        begin
+
+        #{message} before the `rescue`.
+        rescue
+          foo
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        begin
+        rescue
+          foo
+        end
+      RUBY
+    end
+
+    it 'registers an offense for an empty line between the beginning of a block and `rescue` with a comment' do
+      expect_offense(<<~RUBY)
+        do_something do
+          # comment
+
+        #{message} before the `rescue`.
+        rescue
+          foo
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        do_something do
+          # comment
+        rescue
+          foo
+        end
+      RUBY
+    end
 
     it 'registers an offense for an empty line between an empty `ensure` and `end` in a method definition' do
       expect_offense(<<~RUBY)
