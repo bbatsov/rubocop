@@ -50,6 +50,12 @@ RSpec.describe RuboCop::Cop::Style::SingleLineBlockParams, :config do
     RUBY
   end
 
+  it 'does not register an offense when there are more parameters than configured names' do
+    expect_no_offenses(<<~RUBY)
+      foo.reduce { |b, c, d| b + c }
+    RUBY
+  end
+
   it 'allows an unused parameter to have a leading underscore' do
     expect_no_offenses('File.foreach(filename).reduce(0) { |a, _e| a + 1 }')
   end
