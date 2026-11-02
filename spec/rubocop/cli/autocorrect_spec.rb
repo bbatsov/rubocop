@@ -6528,6 +6528,21 @@ RSpec.describe 'RuboCop::CLI --autocorrect', :isolated_environment do # rubocop:
     RUBY
   end
 
+  it 'corrects `Style/RedundantFilterChain` and `Layout/SingleLineBlockChain` offenses' do
+    source_file = Pathname('example.rb')
+    create_file(source_file, <<~RUBY)
+      foo(arr.select { |x| x > 1 }.empty?, bar)
+    RUBY
+
+    expect(
+      cli.run(['-A', '--only', 'Style/RedundantFilterChain,Layout/SingleLineBlockChain'])
+    ).to eq(0)
+
+    expect(source_file.read).to eq(<<~RUBY)
+      foo(arr.none? { |x| x > 1 }, bar)
+    RUBY
+  end
+
   it 'corrects `EnforcedStyle: comparison` of `Style/NilComparison` and `Layout/SingleLineBlockChain` offenses' do
     create_file('.rubocop.yml', <<~YAML)
       Style/NilComparison:

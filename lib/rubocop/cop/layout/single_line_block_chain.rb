@@ -28,7 +28,10 @@ module RuboCop
         # These cops rewrite a method chained to the block in the same pass,
         # which must not start a line of its own.
         def self.autocorrect_incompatible_with
-          [Style::FloatDivision, Style::MapToHash, Style::MapToSet, Style::NilComparison, Style::RedundantSort]
+          [
+            Style::FloatDivision, Style::MapToHash, Style::MapToSet, Style::NilComparison,
+            Style::RedundantFilterChain, Style::RedundantSort
+          ]
         end
 
         def on_send(node)
