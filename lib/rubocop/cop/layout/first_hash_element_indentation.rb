@@ -165,7 +165,7 @@ module RuboCop
         def check_first_pair(hash_node, first_pair, left_brace, left_parenthesis)
           return unless begins_its_line?(first_pair.source_range)
 
-          if separator_style?(first_pair)
+          if separator_aligned?(hash_node, first_pair)
             check_based_on_longest_key(hash_node, left_brace, left_parenthesis)
           else
             check_first(first_pair, left_brace, left_parenthesis, 0)
@@ -184,6 +184,12 @@ module RuboCop
           add_offense(right_brace, message: message) do |corrector|
             autocorrect(corrector, right_brace)
           end
+        end
+
+        def separator_aligned?(hash_node, first_pair)
+          return false unless separator_style?(first_pair)
+
+          HashAlignmentStyles::SeparatorAlignment.new.checkable_layout?(hash_node)
         end
 
         def separator_style?(first_pair)

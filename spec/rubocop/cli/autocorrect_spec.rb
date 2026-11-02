@@ -308,7 +308,8 @@ RSpec.describe 'RuboCop::CLI --autocorrect', :isolated_environment do # rubocop:
       def foo
         @foo_foo_foo_foo_foo_foo_foo ||= bar_bar_bar_bar.
                                          where{{
-      baz_bar[:qux_qux] => 'p', quux_quux_q(self.corge[:grault], garply[:waldo]) => /garply/i}}.
+      baz_bar[:qux_qux] => 'p',
+                                           quux_quux_quux_quux_quux_quux_quux_quux_q(self.corge_corge[:grault_grault_grault_grault], garply[:waldo]) => /garply/i}}.
                                          select{
                                            [
                                            ]
@@ -330,8 +331,9 @@ RSpec.describe 'RuboCop::CLI --autocorrect', :isolated_environment do # rubocop:
       def foo
         @foo_foo_foo_foo_foo_foo_foo ||= bar_bar_bar_bar.
                                          where{{
-                                           baz_bar[:qux_qux] => 'p', quux_quux_q(
-                                             self.corge[:grault], garply[:waldo]) => /garply/i}}.
+                                           baz_bar[:qux_qux] => 'p',
+                                           quux_quux_quux_quux_quux_quux_quux_quux_q(
+                                             self.corge_corge[:grault_grault_grault_grault], garply[:waldo]) => /garply/i}}.
                                          select{
                                            [
                                            ]
