@@ -250,6 +250,31 @@ RSpec.describe RuboCop::Cop::Style::HashLookupMethod, :config do
       expect_no_offenses('array[1, 2]')
     end
 
+    it 'does not register an offense for the `Array` constructor' do
+      expect_no_offenses(<<~RUBY)
+        Array[foo]
+        ::Array[foo]
+      RUBY
+    end
+
+    it 'does not register an offense for the `Hash` constructor' do
+      expect_no_offenses(<<~RUBY)
+        Hash[foo]
+        ::Hash[foo]
+      RUBY
+    end
+
+    it 'registers an offense for bracket access on a namespaced `Array` constant' do
+      expect_offense(<<~RUBY)
+        Foo::Array[key]
+        ^^^^^^^^^^^^^^^ Use `Hash#fetch` instead of `Hash#[]`.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        Foo::Array.fetch(key)
+      RUBY
+    end
+
     it 'registers an offense for chained bracket access without raising a clobbering error' do
       expect_offense(<<~RUBY)
         result[:foo][:bar]

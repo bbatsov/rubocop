@@ -44,6 +44,10 @@ module RuboCop
       #   # good
       #   hash.fetch(key)
       #
+      #   # good - `Array[]` and `Hash[]` are constructors
+      #   Array[element]
+      #   Hash[pairs]
+      #
       # @example AllowedReceivers: ['Rails.cache']
       #   # good
       #   Rails.cache.fetch(name, options) { block }
@@ -60,6 +64,9 @@ module RuboCop
 
         # @!method env_const?(node)
         def_node_matcher :env_const?, '(const {nil? cbase} :ENV)'
+
+        # @!method array_or_hash_const?(node)
+        def_node_matcher :array_or_hash_const?, '(const {nil? cbase} {:Array :Hash})'
 
         def on_send(node)
           return if (receiver = node.receiver) && allowed_receiver?(receiver)
@@ -112,8 +119,10 @@ module RuboCop
         end
 
         def offense_for_fetch?(node)
-          style == :fetch && node.method?(:[]) && node.arguments.one? &&
-            !compound_assignment_target?(node)
+          return false if style != :fetch || !node.method?(:[]) || !node.arguments.one?
+          return false if array_or_hash_const?(node.receiver)
+
+          !compound_assignment_target?(node)
         end
 
         def compound_assignment_target?(node)
