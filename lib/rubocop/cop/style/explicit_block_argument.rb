@@ -50,11 +50,15 @@ module RuboCop
           (block $_ (args $...) (yield $...))
         PATTERN
 
-        # `Style/LambdaCall` rewrites the `call` that the block argument is appended to, and
-        # `Style/TrailingCommaInArguments` changes the trailing comma where it is appended,
-        # in the same pass.
+        # `Style/LambdaCall` rewrites the `call` that the block argument is appended to,
+        # `Style/MethodCallWithArgsParentheses` and `Style/NestedParenthesizedCalls` add the same
+        # parentheses around a last argument without them, and `Style/TrailingCommaInArguments`
+        # changes the trailing comma where it is appended, in the same pass.
         def self.autocorrect_incompatible_with
-          [Lint::UnusedMethodArgument, Style::LambdaCall, Style::TrailingCommaInArguments]
+          [
+            Lint::UnusedMethodArgument, Style::LambdaCall, Style::MethodCallWithArgsParentheses,
+            Style::NestedParenthesizedCalls, Style::TrailingCommaInArguments
+          ]
         end
 
         def initialize(config = nil, options = nil)
@@ -166,10 +170,21 @@ module RuboCop
 
         def insert_argument(node, corrector, block_name)
           last_arg = node.last_argument
+          parenthesize_arguments(last_arg, corrector) if command_call?(last_arg)
           arg_range = range_with_surrounding_comma(last_arg.source_range, :right)
           replacement = " &#{block_name}"
           replacement = ",#{replacement}" unless arg_range.source.end_with?(',')
           corrector.insert_after(arg_range, replacement) unless last_arg.blockarg_type?
+        end
+
+        def command_call?(node)
+          node.call_type? && node.arguments? && !node.parenthesized? &&
+            !node.operator_method? && !node.setter_method?
+        end
+
+        def parenthesize_arguments(node, corrector)
+          corrector.replace(node.loc.selector.end.join(node.first_argument.source_range.begin), '(')
+          corrector.insert_after(node.last_argument, ')')
         end
 
         def correct_call_node(node, corrector, block_name)
