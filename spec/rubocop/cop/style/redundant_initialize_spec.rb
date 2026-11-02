@@ -122,6 +122,15 @@ RSpec.describe RuboCop::Cop::Style::RedundantInitialize, :config do
     expect_correction('')
   end
 
+  it 'registers and corrects an offense for an endless `initialize` method that only calls `super`', :ruby30 do
+    expect_offense(<<~RUBY)
+      def initialize(a, b) = super
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Remove unnecessary `initialize` method.
+    RUBY
+
+    expect_correction('')
+  end
+
   it 'does not register an offense for an `initialize` method with a default argument that calls `super`' do
     expect_no_offenses(<<~RUBY)
       def initialize(a, b = 5)

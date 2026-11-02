@@ -87,7 +87,7 @@ module RuboCop
           else
             parent.loc.line
           end
-        end || node.loc.end.line
+        end || node.source_range.last_line
       end
     end
   end
