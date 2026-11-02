@@ -196,10 +196,14 @@ module RuboCop
         def handle_require_single_line_style(node)
           if node.endless? && node.multiline?
             add_offense(node, message: MSG_MULTI_LINE) do |corrector|
+              next if endless_parent?(node)
+
               correct_to_multiline(corrector, node)
             end
           elsif convertible_to_endless?(node) && single_line_when_made_endless?(node)
             add_offense(node, message: MSG_REQUIRE_SINGLE) do |corrector|
+              next if endless_parent?(node)
+
               correct_to_endless(corrector, node)
             end
           end
