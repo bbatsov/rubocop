@@ -76,6 +76,17 @@ RSpec.describe RuboCop::Cop::Style::HashFetchChain, :config do
               x.hash.dig('foo', 'bar')
             RUBY
           end
+
+          it 'registers an offense and corrects when the last `fetch` has no parentheses' do
+            expect_offense(<<~RUBY, argument: argument)
+              hash.fetch('foo', %{argument}).fetch 'bar', nil
+                   ^^^^^^^^^^^^^^{argument}^^^^^^^^^^^^^^^^^^ Use `dig('foo', 'bar')` instead.
+            RUBY
+
+            expect_correction(<<~RUBY)
+              hash.dig('foo', 'bar')
+            RUBY
+          end
         end
       end
 
