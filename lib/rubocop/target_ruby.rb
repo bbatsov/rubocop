@@ -213,7 +213,8 @@ module RuboCop
 
     # The target ruby version may be found in a mise.toml file, in a line
     # starting with `ruby = "`, or in an inline table such as
-    # `ruby = { version = "3.3", lazy = true }`.
+    # `ruby = { version = "3.3", lazy = true }`. Nested tables in it, such as
+    # `install_env = { ... }`, are skipped as a whole.
     # @api private
     class MiseTomlFile < RubyVersionFile
       private
@@ -223,7 +224,7 @@ module RuboCop
       end
 
       def pattern
-        /^ruby = (?:\{[^}]*\bversion\s*=\s*)?["'](?<version>\d+\.\d+)/.freeze
+        /^ruby = (?:\{(?:[^{}\n]|\{[^{}\n]*\})*?\bversion\s*=\s*)?["'](?<version>\d+\.\d+)/.freeze
       end
     end
 

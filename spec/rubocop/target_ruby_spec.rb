@@ -590,6 +590,30 @@ RSpec.describe RuboCop::TargetRuby, :isolated_environment do
           end
         end
 
+        context 'when a nested table comes before the version' do
+          let(:mise_toml) do
+            [
+              '[tools]',
+              'ruby = { install_env = { RUBY_CONFIGURE_OPTS = "--disable-install-doc" }, ' \
+              'version = "3.3.1" }'
+            ]
+          end
+
+          it 'reads it to determine the target ruby version' do
+            expect(target_ruby.version).to eq 3.3
+          end
+        end
+
+        context 'when only a nested table has a version' do
+          let(:mise_toml) do
+            ['[tools]', 'ruby = { install_env = { version = "3.1.0" }, lazy = true }']
+          end
+
+          it 'uses the default ruby version' do
+            expect(target_ruby.version).to eq default_version
+          end
+        end
+
         context 'when the inline table uses `:` instead of `=`' do
           let(:mise_toml) { ['[tools]', 'ruby = { version: "3.3.1", lazy: true }'] }
 
