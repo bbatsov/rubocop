@@ -57,7 +57,7 @@ module RuboCop
 
             bad_location = bad_location(node)
             add_offense(bad_location, message: message) do |corrector|
-              corrector.replace(bad_location, "#{method} #{module_names_source}")
+              corrector.replace(bad_location, replacement(node, method, module_names_source))
             end
           end
         end
@@ -72,6 +72,26 @@ module RuboCop
 
         def message(method, module_name, bad_method)
           format(MSG, method: method, module_name: module_name, bad_method: bad_method)
+        end
+
+        def replacement(node, method, module_names_source)
+          if statement?(node)
+            "#{method} #{module_names_source}"
+          else
+            "#{method}(#{module_names_source})"
+          end
+        end
+
+        def statement?(node)
+          parent = node.parent
+          return true if parent.nil? || parent.type?(:begin, :kwbegin)
+          return body?(parent, node) if parent.type?(:class, :module, :sclass, :any_def, :any_block)
+
+          parent.if_type? && !parent.ternary? && !parent.condition.equal?(node)
+        end
+
+        def body?(parent, node)
+          parent.body.equal?(node) && !(parent.any_def_type? && parent.endless?)
         end
 
         def mixin_method?(node)

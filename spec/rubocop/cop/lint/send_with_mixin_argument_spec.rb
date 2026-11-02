@@ -64,6 +64,86 @@ RSpec.describe RuboCop::Cop::Lint::SendWithMixinArgument, :config do
     RUBY
   end
 
+  it 'registers an offense and corrects with parentheses when the return value is used' do
+    expect_offense(<<~RUBY)
+      [Foo.send(:extend, Bar)]
+           ^^^^^^^^^^^^^^^^^^ Use `extend Bar` instead of `send(:extend, Bar)`.
+      baz(Foo.send(:include, Bar, Qux), 1)
+              ^^^^^^^^^^^^^^^^^^^^^^^^ Use `include Bar, Qux` instead of `send(:include, Bar, Qux)`.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      [Foo.extend(Bar)]
+      baz(Foo.include(Bar, Qux), 1)
+    RUBY
+  end
+
+  it 'registers an offense and corrects with parentheses in a ternary branch' do
+    expect_offense(<<~RUBY)
+      x = cond ? Foo.send(:include, Bar) : nil
+                     ^^^^^^^^^^^^^^^^^^^ Use `include Bar` instead of `send(:include, Bar)`.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      x = cond ? Foo.include(Bar) : nil
+    RUBY
+  end
+
+  it 'registers an offense and corrects with parentheses when a method is chained' do
+    expect_offense(<<~RUBY)
+      Foo.send(:include, Bar).tap {}
+          ^^^^^^^^^^^^^^^^^^^ Use `include Bar` instead of `send(:include, Bar)`.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      Foo.include(Bar).tap {}
+    RUBY
+  end
+
+  it 'registers an offense and corrects with parentheses when a block is given' do
+    expect_offense(<<~RUBY)
+      Foo.send(:include, Bar) {}
+          ^^^^^^^^^^^^^^^^^^^ Use `include Bar` instead of `send(:include, Bar)`.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      Foo.include(Bar) {}
+    RUBY
+  end
+
+  it 'registers an offense and corrects without parentheses in a modifier `if`' do
+    expect_offense(<<~RUBY)
+      Foo.send(:include, Bar) if cond
+          ^^^^^^^^^^^^^^^^^^^ Use `include Bar` instead of `send(:include, Bar)`.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      Foo.include Bar if cond
+    RUBY
+  end
+
+  it 'registers an offense and corrects with parentheses in an `if` condition' do
+    expect_offense(<<~RUBY)
+      bar if Foo.send(:include, Bar)
+                 ^^^^^^^^^^^^^^^^^^^ Use `include Bar` instead of `send(:include, Bar)`.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      bar if Foo.include(Bar)
+    RUBY
+  end
+
+  it 'registers an offense and corrects with parentheses in an endless method body', :ruby30 do
+    expect_offense(<<~RUBY)
+      private def e = Foo.send(:include, Bar)
+                          ^^^^^^^^^^^^^^^^^^^ Use `include Bar` instead of `send(:include, Bar)`.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      private def e = Foo.include(Bar)
+    RUBY
+  end
+
   context 'when specifying a mixin method as a string' do
     it 'registers an offense when using `send` with `include`' do
       expect_offense(<<~RUBY)
