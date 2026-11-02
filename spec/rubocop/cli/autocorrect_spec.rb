@@ -578,6 +578,21 @@ RSpec.describe 'RuboCop::CLI --autocorrect', :isolated_environment do # rubocop:
     RUBY
   end
 
+  it 'does not double the braces when `Style/HashSyntax` and `Style/RedundantReturn` both wrap a braceless hash' do
+    create_file('example.rb', <<~RUBY)
+      def foo
+        return :a => 1, :b => 2
+      end
+    RUBY
+
+    expect(cli.run(['--autocorrect', '--only', 'Style/HashSyntax,Style/RedundantReturn'])).to eq(0)
+    expect(File.read('example.rb')).to eq(<<~RUBY)
+      def foo
+        {a: 1, b: 2}
+      end
+    RUBY
+  end
+
   it 'does not double the closing parenthesis when `Layout/MultilineMethodDefinitionBraceLayout` ' \
      'and `Style/MultilineMethodSignature` both move it' do
     create_file('.rubocop.yml', <<~YAML)

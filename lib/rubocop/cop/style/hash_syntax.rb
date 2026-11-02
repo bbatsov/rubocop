@@ -144,9 +144,10 @@ module RuboCop
 
         # Omitting the last hash value of a call without parentheses adds the parentheses,
         # which `Style/MethodCallWithArgsParentheses` and `Style/SuperWithArgsParentheses`
-        # would add again in the same pass.
+        # would add again in the same pass. Likewise, `Style/RedundantReturn` would add again
+        # the braces wrapped around a braceless hash returned with `return`.
         def self.autocorrect_incompatible_with
-          [Style::MethodCallWithArgsParentheses, Style::SuperWithArgsParentheses]
+          [Style::MethodCallWithArgsParentheses, Style::RedundantReturn, Style::SuperWithArgsParentheses]
         end
 
         def on_hash(node)
