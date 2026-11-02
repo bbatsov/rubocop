@@ -567,6 +567,59 @@ RSpec.describe RuboCop::Cop::Layout::MultilineMethodCallIndentation, :config do
           RUBY
         end
 
+        it 'registers an offense and corrects a method chain after an implicit `call` inside hash pair' do
+          expect_offense(<<~RUBY)
+            {
+              key: foo.(bar)
+                .baz
+                ^^^^ Align `.baz` with `.(` on line 2.
+            }
+          RUBY
+
+          expect_correction(<<~RUBY)
+            {
+              key: foo.(bar)
+                      .baz
+            }
+          RUBY
+        end
+
+        it 'registers an offense and corrects a method chain after an implicit `call` on a hash inside hash pair' do
+          expect_offense(<<~RUBY)
+            {
+              key: {}.(bar)
+                .baz
+                ^^^^ Align `.baz` with `.(` on line 2.
+            }
+          RUBY
+
+          expect_correction(<<~RUBY)
+            {
+              key: {}.(bar)
+                     .baz
+            }
+          RUBY
+        end
+
+        it 'registers an offense and corrects a method chain after an implicit `call` on a multiline block inside hash pair' do
+          expect_offense(<<~RUBY)
+            {
+              key: foo.bar do
+              end.(baz)
+                .qux
+                ^^^^ Align `.qux` with `.(` on line 3.
+            }
+          RUBY
+
+          expect_correction(<<~RUBY)
+            {
+              key: foo.bar do
+              end.(baz)
+                 .qux
+            }
+          RUBY
+        end
+
         it 'accepts dot-aligned method chain with multiple chains inside hash pair' do
           expect_no_offenses(<<~RUBY)
             {
