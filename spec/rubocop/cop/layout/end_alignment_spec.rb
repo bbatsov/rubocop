@@ -375,6 +375,44 @@ RSpec.describe RuboCop::Cop::Layout::EndAlignment, :config do
     it_behaves_like 'aligned', 'puts 1; until',          'Test',     '        end'
     it_behaves_like 'aligned', 'puts 1; case',           'a when b', '        end'
 
+    it 'does not register an offense when `end` is aligned with a safe navigation setter' do
+      expect_no_offenses(<<~RUBY)
+        obj&.foo = if bar
+          baz
+        end
+      RUBY
+    end
+
+    it 'registers an offense when `end` is aligned with `if` assigned to a safe navigation setter' do
+      expect_offense(<<~RUBY)
+        obj&.foo = if bar
+                     baz
+                   end
+                   ^^^ `end` at 3, 11 is not aligned with `obj&.foo = if` at 1, 0.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        obj&.foo = if bar
+                     baz
+        end
+      RUBY
+    end
+
+    it 'registers an offense when `end` is aligned with `if` passed as an argument to a safe navigation call' do
+      expect_offense(<<~RUBY)
+        obj&.foo(if bar
+                   baz
+                 end)
+                 ^^^ `end` at 3, 9 is not aligned with `obj&.foo(if` at 1, 0.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        obj&.foo(if bar
+                   baz
+        end)
+      RUBY
+    end
+
     it 'registers an offense when using `+` operator method and `end` is not aligned' do
       expect_offense(<<~RUBY)
         variable + if condition

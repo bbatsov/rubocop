@@ -37,6 +37,8 @@ module RuboCop
 
         MSG = 'Align `%<else_range>s` with `%<base_range>s`.'
 
+        alias on_csend on_send
+
         def on_if(node, base = nil)
           return if ignored_node?(node)
           return unless node.else? && begins_its_line?(node.loc.else)

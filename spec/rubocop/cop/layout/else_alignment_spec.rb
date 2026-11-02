@@ -179,6 +179,25 @@ RSpec.describe RuboCop::Cop::Layout::ElseAlignment, :config do
             RUBY
           end
 
+          it 'registers an offense for an if with safe navigation setter' do
+            expect_offense(<<~RUBY)
+              foo&.bar = if baz
+                           derp1
+                         else
+                         ^^^^ Align `else` with `foo&.bar`.
+                           derp2
+                         end
+            RUBY
+
+            expect_correction(<<~RUBY)
+              foo&.bar = if baz
+                           derp1
+              else
+                           derp2
+                         end
+            RUBY
+          end
+
           it 'registers an offense for an if with element assignment' do
             expect_offense(<<~RUBY)
               foo[bar] = if baz
