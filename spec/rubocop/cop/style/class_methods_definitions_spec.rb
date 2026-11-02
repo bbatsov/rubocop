@@ -385,6 +385,42 @@ RSpec.describe RuboCop::Cop::Style::ClassMethodsDefinitions, :config do
         end
       RUBY
     end
+
+    it 'does not register an offense when a method definition shares its first line with `class << self`' do
+      expect_no_offenses(<<~RUBY)
+        class A
+          class << self; def b; end
+          end
+        end
+      RUBY
+    end
+
+    it 'does not register an offense when a method definition shares its first line with other code' do
+      expect_no_offenses(<<~RUBY)
+        class A
+          class << self
+            foo; def b; end
+          end
+        end
+      RUBY
+    end
+
+    it 'registers an offense and corrects when a method definition is preceded only by a semicolon' do
+      expect_offense(<<~RUBY)
+        class A
+          class << self
+          ^^^^^^^^^^^^^ Do not define public methods within class << self.
+            ;def b; end
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class A
+          ;def self.b; end
+        end
+      RUBY
+    end
   end
 
   context 'when EnforcedStyle is self_class' do
