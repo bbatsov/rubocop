@@ -83,7 +83,7 @@ module RuboCop
             return unless node.receiver
             return unless correctable_to_for?(node)
 
-            add_offense(node, message: PREFER_FOR) do |corrector|
+            add_offense(offense_range(node), message: PREFER_FOR) do |corrector|
               EachToForCorrector.new(node).call(corrector)
               opposite_style_detected
             end
@@ -185,6 +185,16 @@ module RuboCop
 
         def variable_like_call?(send_node)
           !send_node.receiver && !send_node.parenthesized?
+        end
+
+        def offense_range(node)
+          range = node.source_range
+          selector = node.send_node.loc.selector
+          return range if same_line?(range, selector)
+
+          line = selector.source_buffer.line_range(selector.line)
+
+          range.with(begin_pos: line.begin_pos + line.source.index(/\S/))
         end
       end
     end
