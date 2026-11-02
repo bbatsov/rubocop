@@ -119,7 +119,7 @@ module RuboCop
         end
 
         def correct_to_endless(corrector, node)
-          receiver = "#{node.receiver.source}." if node.receiver
+          receiver = node.loc.keyword.end.join(node.loc.name.begin).source.lstrip if node.receiver
           body_source = method_body_source(node.body)
           arguments = endless_arguments(node)
           replacement = "def #{receiver}#{node.method_name}#{arguments} = #{body_source}"
