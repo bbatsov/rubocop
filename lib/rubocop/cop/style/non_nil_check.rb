@@ -154,7 +154,7 @@ module RuboCop
 
         def autocorrect_unless_nil(corrector, node, receiver)
           corrector.replace(node.parent.loc.keyword, 'if')
-          corrector.replace(node, receiver.source)
+          corrector.replace(node, receiver ? receiver.source : 'self')
         end
 
         def nil_comparison_style

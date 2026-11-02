@@ -130,6 +130,17 @@ RSpec.describe RuboCop::Cop::Style::NonNilCheck, :config do
       RUBY
     end
 
+    it 'registers an offense for `unless nil?` with an implicit receiver' do
+      expect_offense(<<~RUBY)
+        puts b unless nil?
+                      ^^^^ Explicit non-nil checks are usually redundant.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        puts b if self
+      RUBY
+    end
+
     it 'does not register an offense for `x.nil?`' do
       expect_no_offenses('x.nil?')
     end
