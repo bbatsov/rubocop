@@ -65,11 +65,15 @@ module RuboCop
         private
 
         def autocorrect(corrector, node)
-          if style == :start_of_line && node.parent&.send_type?
-            AlignmentCorrector.align_end(corrector, processed_source, node, node.parent)
-          else
-            AlignmentCorrector.align_end(corrector, processed_source, node, node)
-          end
+          align_to = style == :start_of_line ? outermost_def_modifier(node) : node
+
+          AlignmentCorrector.align_end(corrector, processed_source, node, align_to)
+        end
+
+        def outermost_def_modifier(node)
+          modifiers = node.each_ancestor(:send).take_while { |send| send.def_modifier.equal?(node) }
+
+          modifiers.last || node
         end
       end
     end
