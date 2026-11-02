@@ -93,15 +93,19 @@ module RuboCop
           variable.source_range
         end
 
+        # rubocop:disable-next Metrics/CyclomaticComplexity
         def autocorrect(corrector, node, range, offending_name, preferred_name)
+          kwbegin_node = node.parent.each_ancestor(:kwbegin).first
+          return if kwbegin_node&.parent&.call_type?
+
           corrector.replace(range, preferred_name)
           # Once the exception variable is reassigned, later references point to a
           # different value, so stop correcting after the reassignment - both in the
           # body and in the code following the `begin`/`rescue`.
           return if correct_node(corrector, node.body, offending_name, preferred_name)
-          return unless (kwbegin_node = node.parent.each_ancestor(:kwbegin).first)
+          return unless kwbegin_node
 
-          kwbegin_node.right_siblings.each do |child_node|
+          kwbegin_node.right_siblings.grep(AST::Node).each do |child_node|
             break if correct_node(corrector, child_node, offending_name, preferred_name)
           end
         end

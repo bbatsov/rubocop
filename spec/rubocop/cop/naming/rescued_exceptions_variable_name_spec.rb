@@ -531,6 +531,84 @@ RSpec.describe RuboCop::Cop::Naming::RescuedExceptionsVariableName, :config do
           foo(e)
         RUBY
       end
+
+      it 'registers an offense but does not correct when a method is called on `begin`' do
+        expect_offense(<<~RUBY)
+          begin
+            something
+          rescue StandardError => e1
+                                  ^^ Use `e` instead of `e1`.
+          end.foo
+        RUBY
+
+        expect_no_corrections
+      end
+
+      it 'registers an offense but does not correct when a method with a block referencing the variable is called on `begin`' do
+        expect_offense(<<~RUBY)
+          begin
+            something
+          rescue StandardError => e1
+                                  ^^ Use `e` instead of `e1`.
+          end.foo { e1 }
+        RUBY
+
+        expect_no_corrections
+      end
+
+      it 'registers an offense but does not correct when a method chain referencing the variable is called on `begin`' do
+        expect_offense(<<~RUBY)
+          begin
+            something
+          rescue StandardError => e1
+                                  ^^ Use `e` instead of `e1`.
+          end.foo.bar(e1)
+        RUBY
+
+        expect_no_corrections
+      end
+
+      it 'registers an offense but does not correct when a method is called on `begin` and the variable is referenced afterwards' do
+        expect_offense(<<~RUBY)
+          begin
+            something
+          rescue StandardError => e1
+                                  ^^ Use `e` instead of `e1`.
+          end.foo
+          bar(e1)
+        RUBY
+
+        expect_no_corrections
+      end
+
+      it 'registers an offense but does not correct when a method is safe-navigation called on `begin`' do
+        expect_offense(<<~RUBY)
+          begin
+            something
+          rescue StandardError => e1
+                                  ^^ Use `e` instead of `e1`.
+          end&.foo(e1)
+        RUBY
+
+        expect_no_corrections
+      end
+
+      it 'registers an offense and corrects when `begin` is the scope of a constant' do
+        expect_offense(<<~RUBY)
+          begin
+            something
+          rescue StandardError => e1
+                                  ^^ Use `e` instead of `e1`.
+          end::Foo = e1
+        RUBY
+
+        expect_correction(<<~RUBY)
+          begin
+            something
+          rescue StandardError => e
+          end::Foo = e
+        RUBY
+      end
     end
 
     context 'when exception is assigned with writer method' do
