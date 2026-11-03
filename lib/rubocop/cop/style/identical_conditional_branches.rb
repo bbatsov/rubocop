@@ -140,7 +140,7 @@ module RuboCop
         def check_branches(node, branches)
           # return if any branch is empty. An empty branch can be an `if`
           # without an `else` or a branch that contains only comments.
-          return if branches.any?(&:nil?)
+          return if branches.any?(&:nil?) || value_operand?(node)
 
           tails = branches.map { |branch| tail(branch) }
           check_expressions(node, tails, :after_condition) if duplicated_expressions?(node, tails)
@@ -167,6 +167,10 @@ module RuboCop
           end
 
           check_expressions(node, heads, :before_condition)
+        end
+
+        def value_operand?(node)
+          node.parent&.type?(:call, :array, :pair, :and, :or, :dstr, :yield, :super)
         end
 
         def duplicated_expressions?(node, expressions)

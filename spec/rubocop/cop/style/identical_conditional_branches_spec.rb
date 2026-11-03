@@ -379,6 +379,29 @@ RSpec.describe RuboCop::Cop::Style::IdenticalConditionalBranches, :config do
     end
   end
 
+  context 'when the conditional is used as a value' do
+    it "doesn't register an offense for an `if` passed as an argument" do
+      expect_no_offenses(<<~RUBY)
+        foo(if a
+          do_x
+        else
+          do_x
+        end)
+      RUBY
+    end
+
+    it "doesn't register an offense for a `case` in an array" do
+      expect_no_offenses(<<~RUBY)
+        [case a
+         when 1
+           do_x
+         else
+           do_x
+         end]
+      RUBY
+    end
+  end
+
   context 'on if..elsif with no else' do
     it "doesn't register an offense" do
       expect_no_offenses(<<~RUBY)
