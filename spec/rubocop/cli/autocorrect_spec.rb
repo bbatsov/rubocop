@@ -8756,6 +8756,25 @@ RSpec.describe 'RuboCop::CLI --autocorrect', :isolated_environment do # rubocop:
     RUBY
   end
 
+  it 'corrects `Lint/AmbiguousOperatorPrecedence` with `Style/LineEndConcatenation`' do
+    source_file = Pathname('example.rb')
+    create_file(source_file, <<~RUBY)
+      x = 'foo' +
+          'bar' <<
+          'baz'
+    RUBY
+
+    status = cli.run(
+      ['-A', '--only', 'Lint/AmbiguousOperatorPrecedence,Style/LineEndConcatenation']
+    )
+    expect(status).to eq(0)
+    expect(source_file.read).to eq(<<~RUBY)
+      x = ('foo' \\
+          'bar') <<
+          'baz'
+    RUBY
+  end
+
   it 'corrects `Style/ParenthesesAroundCondition` without turning a multi-line brace block in a `while` condition into `do`...`end`' do
     source_file = Pathname('example.rb')
     create_file(source_file, <<~RUBY)
