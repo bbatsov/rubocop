@@ -44,6 +44,10 @@ module RuboCop
         RESTRICT_ON_SEND = PRECEDENCE.flatten.freeze
         MSG = 'Wrap expressions with varying precedence with parentheses to avoid ambiguity.'
 
+        def self.autocorrect_incompatible_with
+          [Style::LineEndConcatenation]
+        end
+
         def on_and(node)
           return unless (parent = node.parent)
 
