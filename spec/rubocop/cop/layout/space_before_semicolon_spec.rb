@@ -1,8 +1,14 @@
 # frozen_string_literal: true
 
 RSpec.describe RuboCop::Cop::Layout::SpaceBeforeSemicolon, :config do
-  let(:config) { RuboCop::Config.new('Layout/SpaceInsideBlockBraces' => brace_config) }
+  let(:config) do
+    RuboCop::Config.new(
+      'Layout/SpaceInsideBlockBraces' => brace_config,
+      'Layout/SpaceInsideParens' => parens_config
+    )
+  end
   let(:brace_config) { {} }
+  let(:parens_config) { {} }
 
   it 'registers an offense and corrects space before semicolon' do
     expect_offense(<<~RUBY)
@@ -64,6 +70,54 @@ RSpec.describe RuboCop::Cop::Layout::SpaceBeforeSemicolon, :config do
 
         expect_correction(<<~RUBY)
           test {; }
+        RUBY
+      end
+    end
+  end
+
+  context 'inside parentheses' do
+    context 'when EnforcedStyle for SpaceInsideParens is space' do
+      let(:parens_config) { { 'Enabled' => true, 'EnforcedStyle' => 'space' } }
+
+      it 'accepts a space between an opening parenthesis and a semicolon' do
+        expect_no_offenses('( ; )')
+      end
+    end
+
+    context 'when EnforcedStyle for SpaceInsideParens is compact' do
+      let(:parens_config) { { 'Enabled' => true, 'EnforcedStyle' => 'compact' } }
+
+      it 'accepts a space between an opening parenthesis and a semicolon' do
+        expect_no_offenses('( ; )')
+      end
+    end
+
+    context 'when EnforcedStyle for SpaceInsideParens is no_space' do
+      let(:parens_config) { { 'Enabled' => true, 'EnforcedStyle' => 'no_space' } }
+
+      it 'registers an offense and corrects a space between an opening parenthesis and a semicolon' do
+        expect_offense(<<~RUBY)
+          ( ; )
+           ^ Space found before semicolon.
+        RUBY
+
+        expect_correction(<<~RUBY)
+          (; )
+        RUBY
+      end
+    end
+
+    context 'when SpaceInsideParens is disabled' do
+      let(:parens_config) { { 'Enabled' => false, 'EnforcedStyle' => 'space' } }
+
+      it 'registers an offense and corrects a space between an opening parenthesis and a semicolon' do
+        expect_offense(<<~RUBY)
+          ( ; )
+           ^ Space found before semicolon.
+        RUBY
+
+        expect_correction(<<~RUBY)
+          (; )
         RUBY
       end
     end
