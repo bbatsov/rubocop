@@ -54,15 +54,26 @@ module RuboCop
         end
 
         def invalid_bare_argument?(node)
-          node = node.children.first while node&.begin_type? && node.children.one?
+          return true if multiple_statements?(node)
+
+          node = innermost_expression(node)
           return false unless node
 
           keyword_operator?(node) || modifier_expression?(node) || command_call_operand?(node)
         end
 
+        def multiple_statements?(node)
+          node.begin_type? && node.children.size > 1
+        end
+
+        def innermost_expression(node)
+          node = node.children.first while node&.begin_type? && node.children.one?
+          node
+        end
+
         def keyword_operator?(node)
           (node.operator_keyword? && node.semantic_operator?) ||
-            node.rescue_type? || (node.send_type? && node.prefix_not?)
+            node.rescue_type? || node.match_pattern_p_type? || (node.send_type? && node.prefix_not?)
         end
 
         def modifier_expression?(node)

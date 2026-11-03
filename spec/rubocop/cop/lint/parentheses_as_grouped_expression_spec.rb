@@ -239,6 +239,36 @@ RSpec.describe RuboCop::Cop::Lint::ParenthesesAsGroupedExpression, :config do
     RUBY
   end
 
+  it 'does not register an offense for parenthesized multiple statements', :ruby34 do
+    expect_no_offenses(<<~RUBY)
+      obj.do_something (foo; bar)
+    RUBY
+  end
+
+  it 'registers an offense for doubly parenthesized multiple statements', :ruby34 do
+    expect_offense(<<~RUBY)
+      obj.do_something ((foo; bar))
+                      ^ `((foo; bar))` interpreted as grouped expression.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      obj.do_something((foo; bar))
+    RUBY
+  end
+
+  it 'does not register an offense for parenthesized multiline statements', :ruby34 do
+    expect_no_offenses(<<~RUBY)
+      obj.do_something (foo
+                        bar)
+    RUBY
+  end
+
+  it 'does not register an offense for parenthesized one-line pattern matching', :ruby30 do
+    expect_no_offenses(<<~RUBY)
+      obj.do_something (foo in bar)
+    RUBY
+  end
+
   it 'does not register an offense for parenthesized assignment of a command call' do
     expect_no_offenses(<<~RUBY)
       obj.do_something (x = foo.bar 'baz')
