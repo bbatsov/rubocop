@@ -419,6 +419,39 @@ RSpec.describe RuboCop::Cop::Style::AccessModifierDeclarations, :config do
         RUBY
       end
 
+      it "offends when #{access_modifier} is inlined with a method on the same line as the class body" do
+        expect_offense(<<~RUBY, access_modifier: access_modifier)
+          class Test; %{access_modifier} def foo; end; end
+                      ^{access_modifier} `#{access_modifier}` should not be inlined in method definitions.
+        RUBY
+
+        expect_correction(<<~RUBY)
+          class Test; ;#{trailing_whitespace}
+          #{access_modifier}
+
+          def foo; end
+          end
+        RUBY
+      end
+
+      it "offends when #{access_modifier} is inlined with a method after other code on the same line" do
+        expect_offense(<<~RUBY, access_modifier: access_modifier)
+          class Test
+            do_something; %{access_modifier} def foo; end
+                          ^{access_modifier} `#{access_modifier}` should not be inlined in method definitions.
+          end
+        RUBY
+
+        expect_correction(<<~RUBY)
+          class Test
+            do_something;#{trailing_whitespace}
+          #{access_modifier}
+
+          def foo; end
+          end
+        RUBY
+      end
+
       it "offends when #{access_modifier} is inlined with a method on the top level" do
         expect_offense(<<~RUBY, access_modifier: access_modifier)
           %{access_modifier} def foo; end
