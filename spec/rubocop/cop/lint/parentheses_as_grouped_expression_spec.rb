@@ -215,6 +215,18 @@ RSpec.describe RuboCop::Cop::Lint::ParenthesesAsGroupedExpression, :config do
     RUBY
   end
 
+  it 'does not register an offense for a parenthesized one-line pattern match', :ruby27 do
+    expect_no_offenses(<<~RUBY)
+      foo (bar in baz)
+    RUBY
+  end
+
+  it 'does not register an offense for parenthesized multiple statements', :ruby34 do
+    expect_no_offenses(<<~RUBY)
+      foo (bar; baz)
+    RUBY
+  end
+
   it 'does not register an offense for parenthesized `or`' do
     expect_no_offenses(<<~RUBY)
       false? (foo or bar)
