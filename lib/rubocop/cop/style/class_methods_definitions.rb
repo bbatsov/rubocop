@@ -72,7 +72,7 @@ module RuboCop
           return unless def_self_style?
           return unless node.identifier.self_type?
           return unless all_methods_public?(node)
-          return unless def_nodes(node).all? { |def_node| no_code_after?(def_node.source_range) }
+          return unless def_nodes(node).all? { |def_node| on_own_lines?(def_node.source_range) }
 
           add_offense(node, message: MSG_SCLASS) do |corrector|
             next if inside_corrected_sclass?(node)
@@ -114,6 +114,14 @@ module RuboCop
           else
             []
           end
+        end
+
+        def on_own_lines?(range)
+          no_code_before?(range) && no_code_after?(range)
+        end
+
+        def no_code_before?(range)
+          /\A[\s;]*\z/.match?(processed_source.lines[range.line - 1][0...range.column])
         end
 
         def no_code_after?(range)
