@@ -168,6 +168,19 @@ RSpec.describe RuboCop::Cop::Style::DigChain, :config do
       RUBY
     end
 
+    it 'registers an offense and corrects when the last `dig` has no parentheses' do
+      expect_offense(<<~RUBY)
+        x.dig(:foo) # comment
+          ^^^^^^^^^^^^^^^^^^^ Use `dig(:foo, :bar)` instead of chaining.
+         .dig :bar
+      RUBY
+
+      expect_correction(<<~RUBY)
+        # comment
+        x.dig(:foo, :bar)
+      RUBY
+    end
+
     it 'keeps a trailing comment in place and preserves indentation inside a method' do
       expect_offense(<<~RUBY)
         def m
