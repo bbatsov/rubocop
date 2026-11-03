@@ -523,6 +523,18 @@ RSpec.describe RuboCop::Cop::Style::SingleLineMethods, :config do
             end
           RUBY
         end
+
+        it 'corrects only the outer method when an empty method is defined in its body' do
+          expect_correction(<<~RUBY.strip, source: 'def x; def y; end; end', loop: false)
+            def x() = def y; end
+          RUBY
+        end
+
+        it 'corrects only the outer method when an empty method is nested deeper in its body' do
+          expect_correction(<<~RUBY.strip, source: 'def x; [def y; end]; end', loop: false)
+            def x() = [def y; end]
+          RUBY
+        end
       end
 
       context 'with AllowIfMethodIsEmpty: true' do
