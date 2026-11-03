@@ -34,6 +34,12 @@ module RuboCop
 
         RESTRICT_ON_SEND = %i[new [] Array Hash].freeze
 
+        # A hash literal as the first argument needs the parentheses of the call,
+        # which `Style/MethodCallWithArgsParentheses` removes in the same pass.
+        def self.autocorrect_incompatible_with
+          [Style::MethodCallWithArgsParentheses]
+        end
+
         # @!method array_node(node)
         def_node_matcher :array_node, '(send (const {nil? cbase} :Array) :new (array)?)'
 
