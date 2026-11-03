@@ -597,6 +597,19 @@ RSpec.describe RuboCop::Cop::Layout::FirstArgumentIndentation, :config do
           RUBY
         end
 
+        it 'registers an offense and corrects an inner method call without parentheses' do
+          expect_offense(<<~'RUBY')
+            foo(bar \
+                        baz)
+                        ^^^ Indent the first argument one step more than `bar \`.
+          RUBY
+
+          expect_correction(<<~'RUBY')
+            foo(bar \
+                  baz)
+          RUBY
+        end
+
         it 'corrects the entire method call with multiple arguments' do
           expect_offense(<<~RUBY)
             instance_variable_set(
