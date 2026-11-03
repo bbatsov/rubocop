@@ -284,7 +284,7 @@ module RuboCop
 
         def accepted_form?(node, ending: false)
           accepted_if?(node, ending) || node.condition.multiline? ||
-            node.parent&.assignment? || endless_method_body?(node)
+            node.parent&.assignment? || endless_method_body?(node) || value_operand?(node)
         end
 
         # The body of an endless method is a single expression, so there is no
@@ -292,6 +292,10 @@ module RuboCop
         def endless_method_body?(node)
           parent = node.parent
           parent&.any_def_type? && parent.endless?
+        end
+
+        def value_operand?(node)
+          node.parent&.type?(:call, :array, :pair, :and, :or, :dstr, :yield, :super)
         end
 
         def trivial?(node)

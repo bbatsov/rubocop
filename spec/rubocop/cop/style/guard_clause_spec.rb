@@ -395,6 +395,32 @@ RSpec.describe RuboCop::Cop::Style::GuardClause, :config do
     RUBY
   end
 
+  context 'when the `if` is used as a value' do
+    it 'does not register an offense for a method argument' do
+      expect_no_offenses(<<~RUBY)
+        foo(if something then work else raise('message') end)
+      RUBY
+    end
+
+    it 'does not register an offense for a hash value' do
+      expect_no_offenses(<<~RUBY)
+        { key: if something then work else raise('message') end }
+      RUBY
+    end
+
+    it 'does not register an offense for an array element' do
+      expect_no_offenses(<<~RUBY)
+        [if something then work else raise('message') end]
+      RUBY
+    end
+
+    it 'does not register an offense for an operand of `&&`' do
+      expect_no_offenses(<<~RUBY)
+        x && if something then work else raise('message') end
+      RUBY
+    end
+  end
+
   context 'when the `if` is the body of an endless method', :ruby30 do
     it 'does not register an offense' do
       expect_no_offenses(<<~RUBY)
