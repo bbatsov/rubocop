@@ -105,9 +105,13 @@ module RuboCop
         include RangeHelp
         include MinBodyLength
         include StatementModifier
+        include RescueNode
 
         MSG = 'Use a guard clause (`%<example>s`) instead of wrapping the ' \
               'code inside a conditional expression.'
+        STATEMENT_PARENT_TYPES = %i[
+          begin kwbegin block numblock itblock class module sclass ensure
+        ].freeze
 
         def self.autocorrect_incompatible_with
           [Style::MissingElse]
@@ -283,15 +287,35 @@ module RuboCop
         end
 
         def accepted_form?(node, ending: false)
-          accepted_if?(node, ending) || node.condition.multiline? ||
-            node.parent&.assignment? || endless_method_body?(node)
+          return true if accepted_if?(node, ending) || node.condition.multiline?
+
+          !statement?(node)
         end
 
-        # The body of an endless method is a single expression, so there is no
-        # room for a guard clause followed by the rest of the code.
-        def endless_method_body?(node)
+        # A guard clause is followed by the rest of the code as separate statements,
+        # so there is no room for them where a single expression is expected,
+        # such as an assignment value, a hash value, or the body of an endless method.
+        def statement?(node)
           parent = node.parent
-          parent&.any_def_type? && parent.endless?
+          return true if parent.nil? || parent.type?(*STATEMENT_PARENT_TYPES)
+          return !parent.endless? if parent.any_def_type?
+          return !rescue_modifier?(parent) if parent.resbody_type?
+          return !rescue_modifier?(parent.resbody_branches.first) if parent.rescue_type?
+
+          statement_branch?(node, parent)
+        end
+
+        def statement_branch?(node, parent)
+          case parent.type
+          when :if
+            !parent.ternary? && !node.equal?(parent.condition)
+          when :when, :in_pattern, :while, :until, :for
+            node.equal?(parent.body)
+          when :case, :case_match
+            node.equal?(parent.else_branch)
+          else
+            false
+          end
         end
 
         def trivial?(node)
