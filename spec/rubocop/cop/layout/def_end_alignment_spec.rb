@@ -85,6 +85,36 @@ RSpec.describe RuboCop::Cop::Layout::DefEndAlignment, :config do
           def test; end
       RUBY
     end
+
+    # `expect_offense` cannot express the multiline message quoting `foo(` through `def`.
+    it 'aligns `end` with the outermost modifier when nested modifiers span multiple lines' do
+      source = <<~RUBY
+        foo(
+          bar(
+            def baz
+            end))
+      RUBY
+
+      expect(autocorrect_source(source)).to eq(<<~RUBY)
+        foo(
+          bar(
+            def baz
+        end))
+      RUBY
+    end
+
+    it 'registers an offense and aligns `end` with `def` when `def` is not the first argument' do
+      expect_offense(<<~RUBY)
+        foo(bar, def baz
+        end)
+        ^^^ `end` at 2, 0 is not aligned with `def` at 1, 9.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        foo(bar, def baz
+                 end)
+      RUBY
+    end
   end
 
   context 'when EnforcedStyleAlignWith is def' do
