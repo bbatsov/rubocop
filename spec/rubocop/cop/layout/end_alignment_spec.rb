@@ -496,6 +496,21 @@ RSpec.describe RuboCop::Cop::Layout::EndAlignment, :config do
       RUBY
     end
 
+    it 'registers an offense when an `if` is inside the receiver of an operator method and `end` is not aligned' do
+      expect_offense(<<~RUBY)
+        foo([(if bar
+                baz
+            end)].compact + other)
+            ^^^ `end` at 3, 4 is not aligned with `if` at 1, 6.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        foo([(if bar
+                baz
+              end)].compact + other)
+      RUBY
+    end
+
     it 'registers an offense when a `case` is the right operand of `||` in an assignment and `end` is not aligned' do
       expect_offense(<<~RUBY)
         variable = other || case a
