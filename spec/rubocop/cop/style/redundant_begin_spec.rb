@@ -734,6 +734,40 @@ RSpec.describe RuboCop::Cop::Style::RedundantBegin, :config do
     RUBY
   end
 
+  it 'does not register an offense when using an empty `begin` with `ensure` inside an `if` statement' do
+    expect_no_offenses(<<~RUBY)
+      if condition
+        begin
+        ensure
+          baz
+        end
+      end
+    RUBY
+  end
+
+  it 'does not register an offense when using an empty `begin` with `ensure` inside a `case` statement' do
+    expect_no_offenses(<<~RUBY)
+      case condition
+      when foo
+        begin
+        ensure
+          baz
+        end
+      end
+    RUBY
+  end
+
+  it 'does not register an offense when using an empty `begin` with `ensure` inside a `while` statement' do
+    expect_no_offenses(<<~RUBY)
+      while condition
+        begin
+        ensure
+          baz
+        end
+      end
+    RUBY
+  end
+
   it 'does not register an offense when using `begin` with `rescue` inside an `case` statement' do
     expect_no_offenses(<<~RUBY)
       case condition
