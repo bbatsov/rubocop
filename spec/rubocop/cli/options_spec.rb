@@ -1122,12 +1122,11 @@ RSpec.describe 'RuboCop::CLI options', :isolated_environment do # rubocop:disabl
           .to eq(<<~RESULT)
 
             1  Lint/MissingCopEnableDirective
-            1  Lint/RedundantCopDisableDirective [Safe Correctable]
             1  Migration/DepartmentName [Safe Correctable]
             1  Style/FrozenStringLiteralComment [Unsafe Correctable]
             1  Style/NumericPredicate [Unsafe Correctable]
             --
-            5  Total in 1 file
+            4  Total in 1 file
 
           RESULT
       end
