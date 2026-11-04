@@ -108,7 +108,7 @@ module RuboCop
           body = node.body
 
           return unless body&.kwbegin_type?
-          return if body.rescue_node || body.ensure_node
+          return if body.ensure_node || body.rescue_node
 
           register_offense(body)
         end
@@ -307,7 +307,7 @@ module RuboCop
         def inspect_branches(node)
           node.branches.each do |branch|
             next unless branch&.kwbegin_type?
-            next if branch.rescue_node || branch.ensure_node
+            next if branch.ensure_node || branch.rescue_node
             next if ternary_operand_requiring_begin?(branch)
 
             register_offense(branch)
