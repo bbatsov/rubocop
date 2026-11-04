@@ -101,7 +101,7 @@ module RuboCop
           return if correct_node(corrector, node.body, offending_name, preferred_name)
           return unless (kwbegin_node = node.parent.each_ancestor(:kwbegin).first)
 
-          kwbegin_node.right_siblings.each do |child_node|
+          kwbegin_node.right_siblings.grep(AST::Node).each do |child_node|
             break if correct_node(corrector, child_node, offending_name, preferred_name)
           end
         end

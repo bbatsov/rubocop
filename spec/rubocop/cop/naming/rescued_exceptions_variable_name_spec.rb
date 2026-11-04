@@ -365,6 +365,25 @@ RSpec.describe RuboCop::Cop::Naming::RescuedExceptionsVariableName, :config do
           end
         RUBY
       end
+
+      it 'renames the variable references when the `begin` is the receiver of a method call' do
+        expect_offense(<<~RUBY)
+          begin
+            foo
+          rescue StandardError => ex
+                                  ^^ Use `e` instead of `ex`.
+            ex
+          end.bar(ex)
+        RUBY
+
+        expect_correction(<<~RUBY)
+          begin
+            foo
+          rescue StandardError => e
+            e
+          end.bar(e)
+        RUBY
+      end
     end
 
     context 'when the variable is reassigned' do
