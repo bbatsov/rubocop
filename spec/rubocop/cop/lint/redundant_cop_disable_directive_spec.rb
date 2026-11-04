@@ -150,6 +150,50 @@ RSpec.describe RuboCop::Cop::Lint::RedundantCopDisableDirective, :config do
             end
           end
 
+          context 'a cop that is excluded with `--except`' do
+            let(:cop_options) { { except: ['Metrics/MethodLength'] } }
+
+            it 'returns no offense' do
+              expect_no_offenses(<<~RUBY)
+                # rubocop:disable Metrics/MethodLength
+                foo
+              RUBY
+            end
+
+            it 'returns an offense for another cop' do
+              expect_offense(<<~RUBY)
+                # rubocop:disable Metrics/ClassLength
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Unnecessary disabling of `Metrics/ClassLength`.
+                foo
+              RUBY
+            end
+
+            it 'returns no offense for its department' do
+              expect_no_offenses(<<~RUBY)
+                # rubocop:disable Metrics
+                foo
+              RUBY
+            end
+
+            it 'returns no offense for all cops' do
+              expect_no_offenses(<<~RUBY)
+                # rubocop:disable all
+                foo
+              RUBY
+            end
+          end
+
+          context 'a cop whose department is excluded with `--except`' do
+            let(:cop_options) { { except: ['Metrics'] } }
+
+            it 'returns no offense' do
+              expect_no_offenses(<<~RUBY)
+                # rubocop:disable Metrics/MethodLength
+                foo
+              RUBY
+            end
+          end
+
           context 'a department that is disabled in the config' do
             let(:config) do
               RuboCop::Config.new('Metrics' => { 'Enabled' => false })

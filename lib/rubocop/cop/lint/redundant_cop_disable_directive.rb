@@ -111,9 +111,22 @@ module RuboCop
             # offenses, so its directives cannot be judged - they typically
             # prepare the code for the moment the cop gets enabled.
             next if pending_cop_not_run?(cop) || disabled_by_preview?(cop)
+            next if excluded_from_run?(cop)
 
             each_already_disabled(cop, line_ranges, &block)
             each_line_range(cop, line_ranges, &block)
+          end
+        end
+
+        # A cop left out with `--except` produces no offenses in this run, but
+        # its directives are still needed in a full run.
+        def excluded_from_run?(cop)
+          Badge.parse(cop).match_name?(@options[:except])
+        end
+
+        def department_partly_excluded_from_run?(department)
+          Array(@options[:except]).any? do |name|
+            name == department || name.start_with?("#{department}/")
           end
         end
 
@@ -255,6 +268,9 @@ module RuboCop
         end
 
         def find_redundant_all(range, next_range)
+          # The cops left out with `--except` may have offenses in the range.
+          return if @options[:except]
+
           # If there's a disable all comment followed by a comment
           # specifically disabling `cop`, we don't report the `all`
           # comment. If the disable all comment is truly redundant, we will
@@ -266,6 +282,8 @@ module RuboCop
 
         def find_redundant_department(cop, range)
           department = cop.split('/').first
+          return if department_partly_excluded_from_run?(department)
+
           offenses = offenses_to_check.select { |offense| offense.cop_name.start_with?(department) }
           add_department_marker(department) if range_with_offense?(range, offenses)
         end
