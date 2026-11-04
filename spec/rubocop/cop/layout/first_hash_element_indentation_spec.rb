@@ -156,6 +156,57 @@ RSpec.describe RuboCop::Cop::Layout::FirstHashElementIndentation, :config do
       RUBY
     end
 
+    it 'accepts the plain indentation of the first pair when pairs are on the same line' do
+      expect_no_offenses(<<~RUBY)
+        a << {
+          'a' => 1, 'aaa' => 222
+        }
+      RUBY
+    end
+
+    it 'registers an offense and corrects the first pair with the plain indentation when pairs are on the same line' do
+      expect_offense(<<~RUBY)
+        a << {
+            'a' => 1, 'aaa' => 222
+            ^^^^^^^^ Use 2 spaces for indentation in a hash, relative to the start of the line where the left curly brace is.
+        }
+      RUBY
+
+      expect_correction(<<~RUBY)
+        a << {
+          'a' => 1, 'aaa' => 222
+        }
+      RUBY
+    end
+
+    it 'accepts the plain indentation of the first pair when hash rockets and colons are mixed' do
+      expect_no_offenses(<<~RUBY)
+        a << {
+          'a' => 1,
+          aaaaa: 222
+        }
+      RUBY
+    end
+
+    it 'accepts the plain indentation of the first pair when a value begins on a later line than its key' do
+      expect_no_offenses(<<~RUBY)
+        a << {
+          'a' => 1,
+          'aaa' =>
+            222
+        }
+      RUBY
+    end
+
+    it 'accepts the plain indentation of the first pair when a pair follows a double splat on the same line' do
+      expect_no_offenses(<<~RUBY)
+        a << {
+          'a' => 1,
+          **foo, 'aaa' => 222
+        }
+      RUBY
+    end
+
     it_behaves_like 'right brace'
   end
 
