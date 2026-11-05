@@ -376,7 +376,7 @@ module RuboCop
             (send (const {nil? cbase} :ENV) :[] _)
             (or (send (const {nil? cbase} :ENV) :[] _) _)
             (send _ {:count :length :size} ...)
-            (block (send _ {:count :length :size} ...) ...)
+            (any_block (send _ {:count :length :size} ...) ...)
           }
         PATTERN
 

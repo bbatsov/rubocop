@@ -678,6 +678,18 @@ RSpec.describe RuboCop::Cop::Style::MutableConstant, :config do
           CONST = 'foo'.size
         RUBY
       end
+
+      it 'accepts checking fixed size with a numbered parameter block' do
+        expect_no_offenses(<<~RUBY)
+          CONST = [1, 2, 3].count { _1 > 2 }
+        RUBY
+      end
+
+      it 'accepts checking fixed size with an `it` block', :ruby34 do
+        expect_no_offenses(<<~RUBY)
+          CONST = [1, 2, 3].count { it > 2 }
+        RUBY
+      end
     end
 
     context 'operators that produce unfrozen objects' do
