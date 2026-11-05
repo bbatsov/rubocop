@@ -124,5 +124,21 @@ RSpec.describe RuboCop::Cop::Layout::MultilineArrayBraceLayout, :config do
             # comment
       RUBY
     end
+
+    it 'registers an offense and corrects a percent literal array whose last element is an escaped newline' do
+      expect_offense(<<~'RUBY')
+        %i[
+          foo \
+
+        ]
+        ^ The closing array brace must be on the same line as the last array element.
+      RUBY
+
+      expect_correction(<<~'RUBY')
+        %i[
+          foo \
+        ]
+      RUBY
+    end
   end
 end

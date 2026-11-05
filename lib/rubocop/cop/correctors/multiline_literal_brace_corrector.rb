@@ -79,8 +79,15 @@ module RuboCop
       end
 
       def correct_next_line_brace(corrector, end_range)
-        corrector.remove(range_with_surrounding_space(node.loc.end, side: :left))
+        corrector.remove(space_before_closing_brace(end_range))
         corrector.insert_before(end_range, content_if_comment_present(corrector, node))
+      end
+
+      def space_before_closing_brace(end_range)
+        range = range_with_surrounding_space(node.loc.end, side: :left)
+        return range if range.begin_pos >= end_range.end_pos
+
+        range.with(begin_pos: end_range.end_pos)
       end
 
       def correct_heredoc_argument_method_chain(corrector, end_range)
