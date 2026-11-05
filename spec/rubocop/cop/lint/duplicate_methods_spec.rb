@@ -590,6 +590,18 @@ RSpec.describe RuboCop::Cop::Lint::DuplicateMethods, :config do
         RUBY
       end
 
+      it "registers an offense for duplicate delegate with a non-symbol option key in #{type}" do
+        expect_offense(<<~RUBY, 'example.rb')
+          #{opening_line}
+            def some_method
+              implement 1
+            end
+            delegate :method, key => 1, "\#{key}": 2, to: :some, prefix: true
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Method `#{receiver}#some_method` is defined at both example.rb:2 and example.rb:5.
+          end
+        RUBY
+      end
+
       it "registers an offense with multiple delegates in #{type}" do
         expect_offense(<<~RUBY, 'example.rb')
           #{opening_line}

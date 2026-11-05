@@ -399,7 +399,7 @@ module RuboCop
         end
 
         def hash_value(node, key)
-          node.pairs.find { |pair| pair.key.value == key }&.value
+          node.pairs.find { |pair| pair.key.sym_type? && pair.key.value == key }&.value
         end
 
         def found_instance_method(node, name)
