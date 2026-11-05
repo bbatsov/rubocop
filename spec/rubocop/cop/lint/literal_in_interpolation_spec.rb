@@ -243,8 +243,35 @@ RSpec.describe RuboCop::Cop::Lint::LiteralInInterpolation, :config do
     it_behaves_like('literal interpolation', 'nil', '')
     it_behaves_like('literal interpolation', 1..2)
     it_behaves_like('literal interpolation', 1...2)
+    it_behaves_like('literal interpolation', '..2')
+    it_behaves_like('literal interpolation', '1..')
+    it_behaves_like('literal interpolation', '1.5...')
     it_behaves_like('literal interpolation', true)
     it_behaves_like('literal interpolation', false)
+
+    it 'does not register an offense for a beginless range with a string boundary' do
+      expect_no_offenses(<<~'RUBY')
+        "#{..'a'}"
+      RUBY
+    end
+
+    it 'does not register an offense for an endless range with a symbol boundary' do
+      expect_no_offenses(<<~'RUBY')
+        "#{:a..}"
+      RUBY
+    end
+
+    it 'does not register an offense for an endless range with a `nil` boundary' do
+      expect_no_offenses(<<~'RUBY')
+        "#{nil..}"
+      RUBY
+    end
+
+    it 'does not register an offense for an endless range with a rational boundary' do
+      expect_no_offenses(<<~'RUBY')
+        "#{1r..}"
+      RUBY
+    end
   end
 
   shared_examples 'literal interpolation in words literal' do |prefix|
