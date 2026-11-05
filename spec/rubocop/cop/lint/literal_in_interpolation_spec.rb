@@ -243,6 +243,9 @@ RSpec.describe RuboCop::Cop::Lint::LiteralInInterpolation, :config do
     it_behaves_like('literal interpolation', 'nil', '')
     it_behaves_like('literal interpolation', 1..2)
     it_behaves_like('literal interpolation', 1...2)
+    it_behaves_like('literal interpolation', '1..')
+    it_behaves_like('literal interpolation', '..2')
+    it_behaves_like('literal interpolation', '[1..]')
     it_behaves_like('literal interpolation', true)
     it_behaves_like('literal interpolation', false)
   end

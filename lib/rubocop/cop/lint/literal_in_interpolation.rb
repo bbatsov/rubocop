@@ -189,7 +189,8 @@ module RuboCop
         # Does node print its own source when converted to a string?
         def prints_as_self?(node)
           node.basic_literal? ||
-            (COMPOSITE.include?(node.type) && node.children.all? { |child| prints_as_self?(child) })
+            (COMPOSITE.include?(node.type) &&
+              node.children.compact.all? { |child| prints_as_self?(child) })
         end
 
         def space_literal?(node)
