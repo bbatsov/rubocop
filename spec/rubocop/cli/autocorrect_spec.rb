@@ -879,6 +879,26 @@ RSpec.describe 'RuboCop::CLI --autocorrect', :isolated_environment do # rubocop:
     RUBY
   end
 
+  it 'does not cause an infinite loop between `Layout/SpaceBeforeSemicolon` and `Layout/SpaceInsideParens` with `EnforcedStyle: space`' do
+    create_file('.rubocop.yml', <<~YAML)
+      Layout/SpaceInsideParens:
+        EnforcedStyle: space
+    YAML
+    create_file('example.rb', <<~RUBY)
+      (;)
+    RUBY
+
+    status = cli.run(
+      ['--autocorrect-all', '--only', 'Layout/SpaceBeforeSemicolon,Layout/SpaceInsideParens']
+    )
+
+    expect(status).to eq(0)
+    expect($stderr.string).to eq('')
+    expect(File.read('example.rb')).to eq(<<~RUBY)
+      ( ; )
+    RUBY
+  end
+
   it 'does not cause an infinite loop between `Style/Lambda`, `Layout/RedundantLineBreak`, and `Layout/SpaceInsideParens` with `EnforcedStyle: space`' do
     create_file('.rubocop.yml', <<~YAML)
       Layout/LineLength:

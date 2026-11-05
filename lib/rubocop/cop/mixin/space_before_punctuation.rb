@@ -8,6 +8,7 @@ module RuboCop
       include RangeHelp
 
       MSG = 'Space found before %<token>s.'
+      SPACE_INSIDE_PARENS_STYLES = %w[space compact].freeze
 
       def on_new_investigation
         each_missing_space(processed_source.sorted_tokens) do |token, pos_before|
@@ -36,13 +37,22 @@ module RuboCop
       end
 
       def space_required_after?(token)
-        token.left_curly_brace? && space_required_after_lcurly?
+        return space_required_after_lcurly? if token.left_curly_brace?
+        return space_required_after_lparen? if token.left_parens?
+
+        false
       end
 
       def space_required_after_lcurly?
         cfg = config.for_cop('Layout/SpaceInsideBlockBraces')
         style = cfg['EnforcedStyle'] || 'space'
         style == 'space'
+      end
+
+      def space_required_after_lparen?
+        style = config.for_enabled_cop('Layout/SpaceInsideParens')['EnforcedStyle']
+
+        SPACE_INSIDE_PARENS_STYLES.include?(style)
       end
     end
   end
