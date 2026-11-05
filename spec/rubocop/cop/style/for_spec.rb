@@ -551,6 +551,45 @@ RSpec.describe RuboCop::Cop::Style::For, :config do
       RUBY
     end
 
+    it 'registers an offense when the receiver is a multiline `each` with braces' do
+      expect_offense(<<~RUBY)
+        foo.each { |x|
+        ^^^^^^^^^^^^^^ Prefer `for` over `each`.
+          bar(x)
+        }.each { |y|
+        ^^^^^^^^^^^^ Prefer `for` over `each`.
+          baz(y)
+        }
+      RUBY
+
+      expect_correction(<<~RUBY, loop: false)
+        for y in for x in foo do
+          bar(x)
+        end do
+          baz(y)
+        end
+      RUBY
+    end
+
+    it 'registers an offense on the line of `each` when the receiver spans multiple lines' do
+      expect_offense(<<~RUBY)
+        foo(
+          bar
+        ).each do |x|
+        ^^^^^^^^^^^^^ Prefer `for` over `each`.
+          baz(x)
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        for x in foo(
+          bar
+        ) do
+          baz(x)
+        end
+      RUBY
+    end
+
     it 'accepts for' do
       expect_no_offenses(<<~RUBY)
         def func
