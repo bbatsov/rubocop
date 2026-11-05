@@ -196,7 +196,8 @@ module RuboCop
           return if expressions.any?(&:nil?)
 
           inserted_expression = false
-          hoistable = hoistable?(node)
+          hoistable = hoistable?(node) &&
+                      !void_value_after_condition?(node, expressions.first, insert_position)
 
           expressions.each do |expression|
             add_offense(expression) do |corrector|
@@ -220,6 +221,31 @@ module RuboCop
           return false if node.if_type? && (node.ternary? || node.then?)
 
           statement?(node.parent&.assignment? ? node.parent : node)
+        end
+
+        def void_value_after_condition?(node, expression, insert_position)
+          return false unless insert_position == :after_condition
+          return false unless expression.type?(:return, :break, :next, :redo, :retry)
+
+          node.parent&.assignment? || value_tail?(node)
+        end
+
+        def value_tail?(node)
+          parent = node.parent
+          return false unless tail_of?(parent, node)
+
+          value_tail?(parent) || !statement?(parent)
+        end
+
+        def tail_of?(parent, node)
+          case parent&.type
+          when :begin, :kwbegin
+            parent.children.last.equal?(node)
+          when :ensure
+            true
+          else
+            false
+          end
         end
 
         def statement?(node)

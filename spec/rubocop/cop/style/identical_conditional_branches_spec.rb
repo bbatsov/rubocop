@@ -1028,6 +1028,170 @@ RSpec.describe RuboCop::Cop::Style::IdenticalConditionalBranches, :config do
     end
   end
 
+  context 'when the trailing lines are `return`' do
+    it 'registers and corrects an offense when the conditional is a statement' do
+      expect_offense(<<~RUBY)
+        def foo
+          case x
+          when y
+            do_y
+            return
+            ^^^^^^ Move `return` out of the conditional.
+          else
+            do_z
+            return
+            ^^^^^^ Move `return` out of the conditional.
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        def foo
+          case x
+          when y
+            do_y
+          else
+            do_z
+          end
+          return
+        end
+      RUBY
+    end
+
+    it 'registers an offense but does not correct when the parentheses are a receiver' do
+      expect_offense(<<~RUBY)
+        (case x
+         when y
+           return
+           ^^^^^^ Move `return` out of the conditional.
+         else
+           return
+           ^^^^^^ Move `return` out of the conditional.
+         end).to_s
+      RUBY
+
+      expect_no_corrections
+    end
+
+    it 'registers and corrects an offense when the conditional is not last in the parentheses' do
+      expect_offense(<<~RUBY)
+        (case x
+         when y
+           return
+           ^^^^^^ Move `return` out of the conditional.
+         else
+           return
+           ^^^^^^ Move `return` out of the conditional.
+         end
+         foo).to_s
+      RUBY
+
+      expect_correction(<<~RUBY)
+        (case x
+         when y
+         else
+         end
+         return
+         foo).to_s
+      RUBY
+    end
+
+    it 'registers and corrects an offense when the leading lines are `return`' do
+      expect_offense(<<~RUBY)
+        (case x
+         when y
+           return
+           ^^^^^^ Move `return` out of the conditional.
+           do_y
+         else
+           return
+           ^^^^^^ Move `return` out of the conditional.
+           do_z
+         end).to_s
+      RUBY
+
+      expect_correction(<<~RUBY)
+        (return
+         case x
+         when y
+           do_y
+         else
+           do_z
+         end).to_s
+      RUBY
+    end
+
+    it 'registers an offense but does not correct when nested parentheses are an argument' do
+      expect_offense(<<~RUBY)
+        foo(((case x
+              when y
+                return
+                ^^^^^^ Move `return` out of the conditional.
+              else
+                return
+                ^^^^^^ Move `return` out of the conditional.
+              end)))
+      RUBY
+
+      expect_no_corrections
+    end
+
+    it 'registers an offense but does not correct when the result is assigned' do
+      expect_offense(<<~RUBY)
+        def foo
+          bar = case x
+                when y
+                  do_y
+                  return
+                  ^^^^^^ Move `return` out of the conditional.
+                else
+                  do_z
+                  return
+                  ^^^^^^ Move `return` out of the conditional.
+                end
+        end
+      RUBY
+
+      expect_no_corrections
+    end
+
+    it 'registers an offense but does not correct when the result of `begin` is assigned' do
+      expect_offense(<<~RUBY)
+        bar = begin
+          case x
+          when y
+            next
+            ^^^^ Move `next` out of the conditional.
+          else
+            next
+            ^^^^ Move `next` out of the conditional.
+          end
+        end
+      RUBY
+
+      expect_no_corrections
+    end
+
+    it 'registers an offense but does not correct in `ensure` when the result of `begin` is assigned' do
+      expect_offense(<<~RUBY)
+        bar = begin
+          case x
+          when y
+            break
+            ^^^^^ Move `break` out of the conditional.
+          else
+            break
+            ^^^^^ Move `break` out of the conditional.
+          end
+        ensure
+          baz
+        end
+      RUBY
+
+      expect_no_corrections
+    end
+  end
+
   context 'with empty parentheses' do
     it 'does not raise any error when using empty brace in the both parentheses' do
       expect_no_offenses(<<~RUBY)
