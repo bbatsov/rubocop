@@ -78,7 +78,8 @@ module RuboCop
         # in which case all cops are returned for compatibility.
         return Cop::Registry.all if @config_store.nil?
 
-        registry.enabled(@config_store.for_file(file))
+        config = @config_store.for_file(file)
+        registry_for(config).enabled(config)
       end
 
       def relevant_for_output?(options, target_offenses)
@@ -100,12 +101,18 @@ module RuboCop
 
       # Filtering by badge keeps lazy-loaded cops unloaded; `Registry#enabled` then loads only
       # the enabled cops, the same set the runner mobilizes.
-      def registry
-        @registry ||= Cop::Registry.global.filter_by_badge(options) do |badge|
-          next false if badge.department == :Test || badge.match_name?(options[:except])
-
-          options[:only].nil? || badge.match_name?(options[:only])
+      def registry_for(config)
+        @registry_by_config ||= {}.compare_by_identity
+        @registry_by_config[config] ||= Cop::Registry.global.filter_by_badge(options) do |badge|
+          mobilized_cop_badge?(badge, config)
         end
+      end
+
+      def mobilized_cop_badge?(badge, config)
+        return false if badge.department == :Test || badge.match_name?(options[:except])
+        return false if config.missing_default_config_for?(badge)
+
+        options[:only].nil? || badge.match_name?(options[:only])
       end
 
       def classname_attribute_value(file)

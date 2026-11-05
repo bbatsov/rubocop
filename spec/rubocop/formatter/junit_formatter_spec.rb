@@ -138,6 +138,20 @@ RSpec.describe RuboCop::Formatter::JUnitFormatter, :config do
           expect(output.string).not_to include("name='Style/AndOr'")
         end
       end
+
+      context 'and a plugin is loaded after the configuration was resolved', :restore_configuration do
+        let(:junit_config) do
+          RuboCop::ConfigLoader.default_configuration = nil
+          super().tap do
+            RuboCop::Plugin.integrate_plugins(RuboCop::Config.new, ['rubocop-internal_affairs'])
+          end
+        end
+
+        it 'does not display an element for a cop of the plugin' do
+          expect(output.string).to include("name='Style/AndOr'")
+          expect(output.string).not_to include("name='InternalAffairs/UselessMessageAssertion'")
+        end
+      end
     end
   end
 end
