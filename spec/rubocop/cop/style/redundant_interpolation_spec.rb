@@ -259,6 +259,121 @@ RSpec.describe RuboCop::Cop::Style::RedundantInterpolation, :config do
     RUBY
   end
 
+  it 'accepts an interpolated `return`' do
+    expect_no_offenses(<<~'RUBY')
+      "#{return foo}"
+    RUBY
+  end
+
+  it 'accepts interpolated statements ending with `return`' do
+    expect_no_offenses(<<~'RUBY')
+      "#{foo; return}"
+    RUBY
+  end
+
+  it 'accepts an interpolated `begin` whose body ends with `return`' do
+    expect_no_offenses(<<~'RUBY')
+      "#{begin
+        return
+      ensure
+        foo
+      end}"
+    RUBY
+  end
+
+  it 'accepts an interpolated `begin` whose `ensure` ends with `return`' do
+    expect_no_offenses(<<~'RUBY')
+      "#{begin
+        foo
+      ensure
+        return
+      end}"
+    RUBY
+  end
+
+  it 'accepts an interpolated `begin` whose body and `rescue` end with `return`' do
+    expect_no_offenses(<<~'RUBY')
+      "#{begin
+        return
+      rescue
+        return
+      end}"
+    RUBY
+  end
+
+  it 'accepts an interpolated `begin` whose body and `else` end with `return`' do
+    expect_no_offenses(<<~'RUBY')
+      "#{begin
+        return
+      rescue
+        foo
+      else
+        return
+      end}"
+    RUBY
+  end
+
+  it 'accepts an interpolated conditional whose branches all end with `return`' do
+    expect_no_offenses(<<~'RUBY')
+      "#{foo ? return : (return)}"
+    RUBY
+  end
+
+  it 'accepts a parenthesized one-line `=>` pattern matching', :ruby30 do
+    expect_no_offenses(<<~'RUBY')
+      "#{(foo => bar)}"
+    RUBY
+  end
+
+  it 'registers an offense for an interpolated `begin` whose `rescue` does not end with `return`' do
+    expect_offense(<<~'RUBY')
+      "#{begin
+      ^^^^^^^^ Prefer `to_s` over string interpolation.
+        return
+      rescue
+        foo
+      end}"
+    RUBY
+
+    expect_correction(<<~RUBY)
+      (begin
+        return
+      rescue
+        foo
+      end).to_s
+    RUBY
+  end
+
+  it 'registers an offense for an interpolated `begin` whose body does not end with `return`' do
+    expect_offense(<<~'RUBY')
+      "#{begin
+      ^^^^^^^^ Prefer `to_s` over string interpolation.
+        foo
+      rescue
+        return
+      end}"
+    RUBY
+
+    expect_correction(<<~RUBY)
+      (begin
+        foo
+      rescue
+        return
+      end).to_s
+    RUBY
+  end
+
+  it 'registers an offense for an interpolated `return` modifier' do
+    expect_offense(<<~'RUBY')
+      "#{return if foo}"
+      ^^^^^^^^^^^^^^^^^^ Prefer `to_s` over string interpolation.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      (return if foo).to_s
+    RUBY
+  end
+
   it 'accepts strings with characters before the interpolation' do
     expect_no_offenses('"this is #{@sparta}"')
   end
