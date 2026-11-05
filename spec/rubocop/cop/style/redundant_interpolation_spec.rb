@@ -199,6 +199,42 @@ RSpec.describe RuboCop::Cop::Style::RedundantInterpolation, :config do
     RUBY
   end
 
+  it 'registers an offense for a redundant interpolation nested in a method argument' do
+    expect_offense(<<~'RUBY')
+      "#{do_something("#{var}")}"
+                      ^^^^^^^^ Prefer `to_s` over string interpolation.
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Prefer `to_s` over string interpolation.
+    RUBY
+
+    expect_correction(<<~'RUBY', loop: false)
+      do_something("#{var}").to_s
+    RUBY
+  end
+
+  it 'registers an offense for a redundant interpolation nested in a command argument' do
+    expect_offense(<<~'RUBY')
+      "#{raise RuntimeError, "#{message}"}"
+                             ^^^^^^^^^^^^ Prefer `to_s` over string interpolation.
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Prefer `to_s` over string interpolation.
+    RUBY
+
+    expect_correction(<<~'RUBY', loop: false)
+      raise(RuntimeError, "#{message}").to_s
+    RUBY
+  end
+
+  it 'registers an offense for a redundant interpolation nested in a method receiver' do
+    expect_offense(<<~'RUBY')
+      "#{"#{var}".do_something}"
+         ^^^^^^^^ Prefer `to_s` over string interpolation.
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^ Prefer `to_s` over string interpolation.
+    RUBY
+
+    expect_correction(<<~'RUBY', loop: false)
+      "#{var}".do_something.to_s
+    RUBY
+  end
+
   it 'registers an offense for "#{var}"' do
     expect_offense(<<~'RUBY')
       var = 1; "#{var}"

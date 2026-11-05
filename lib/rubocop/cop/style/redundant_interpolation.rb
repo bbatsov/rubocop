@@ -53,6 +53,8 @@ module RuboCop
           return if use_match_pattern?(embedded_node)
 
           add_offense(node) do |corrector|
+            next if part_of_ignored_node?(node)
+
             if variable_interpolation?(embedded_node)
               autocorrect_variable_interpolation(corrector, embedded_node, node)
             elsif single_variable_interpolation?(embedded_node)
@@ -126,6 +128,7 @@ module RuboCop
                    end
 
           corrector.replace(node, "#{source}.to_s")
+          ignore_node(node)
         end
 
         def autocorrect_other(corrector, embedded_node, node)
