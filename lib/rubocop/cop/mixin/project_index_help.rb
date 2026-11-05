@@ -19,7 +19,7 @@ module RuboCop
 
       class << self
         # The signature is a property of the index, not of the cop, and computing
-        # it stats every indexed file, so all cops sharing an index share one
+        # it reads every indexed file, so all cops sharing an index share one
         # computation. A single-entry cache (instead of a hash keyed by index)
         # avoids retaining stale graphs in long-lived processes.
         attr_accessor :cached_index_signature
@@ -188,14 +188,13 @@ module RuboCop
           next if uri == BUILTIN_DOCUMENT_URI
 
           path = uri.delete_prefix(FILE_URI_PREFIX).sub(WINDOWS_DRIVE_PREFIX, '')
-          mtime, size = begin
-            stat = File.stat(path)
-            [stat.mtime.to_f, stat.size]
+          digest = begin
+            Digest::SHA1.file(path).hexdigest
           rescue StandardError
-            [0, 0]
+            ''
           end
 
-          "#{path}:#{mtime}:#{size}"
+          "#{path}:#{digest}"
         end.sort
       end
     end
