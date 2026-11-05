@@ -442,6 +442,29 @@ RSpec.describe RuboCop::Cop::Lint::UselessAssignment, :config do
     end
   end
 
+  context 'when a variable is assigned with operator assignment in an argument of a top level method call with an empty block' do
+    it 'registers an offense' do
+      expect_offense(<<~RUBY)
+        do_something foo ||= 1 do
+                     ^^^ Useless assignment to variable - `foo`.
+        end
+      RUBY
+
+      expect_no_corrections
+    end
+  end
+
+  context 'when a variable is assigned with operator assignment in a default argument of an empty method' do
+    it 'registers an offense' do
+      expect_offense(<<~RUBY)
+        def some_method(arg = (foo ||= 1)); end
+                               ^^^ Useless assignment to variable - `foo`.
+      RUBY
+
+      expect_no_corrections
+    end
+  end
+
   context 'when a variable is first assigned with `&&=`' do
     it 'registers an offense but does not autocorrect (it would raise `NameError`)' do
       expect_offense(<<~RUBY)
