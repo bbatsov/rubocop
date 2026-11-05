@@ -201,7 +201,10 @@ module RuboCop
           return false unless display_column(send_node.source_range) < column_delta.abs
           return false if column_delta.positive?
 
-          top_level_send != send_node || begins_its_line?(top_level_send.loc.end)
+          return true if top_level_send != send_node
+          return false unless (closing_parenthesis = top_level_send.loc.end)
+
+          begins_its_line?(closing_parenthesis)
         end
 
         def inner_call?(top_level_send)
