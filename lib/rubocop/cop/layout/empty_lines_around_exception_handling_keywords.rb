@@ -87,12 +87,14 @@ module RuboCop
             keyword = loc.source
 
             # below the keyword
-            unless left_to_block_body_cop?(body, line)
+            unless ending_left_to_block_body_cop?(body, line)
               check_line(style, line, message('after', keyword), &:empty?)
             end
 
             # above the keyword
-            check_line(style, line - 2, message('before', keyword), &:empty?)
+            unless beginning_left_to_block_body_cop?(body, line)
+              check_line(style, line - 2, message('before', keyword), &:empty?)
+            end
           end
         end
 
@@ -126,13 +128,23 @@ module RuboCop
           end
         end
 
-        def left_to_block_body_cop?(body, keyword_line)
+        def ending_left_to_block_body_cop?(body, keyword_line)
+          return false unless block_body_with_empty_lines_style?(body)
+
+          only_empty_lines_until_end?(body, keyword_line)
+        end
+
+        def block_body_with_empty_lines_style?(body)
           return false unless body.parent.any_block_type?
 
           cop_config = config.for_enabled_cop('Layout/EmptyLinesAroundBlockBody')
-          return false if cop_config['EnforcedStyle'] != 'empty_lines'
+          cop_config['EnforcedStyle'] == 'empty_lines'
+        end
 
-          only_empty_lines_until_end?(body, keyword_line)
+        def beginning_left_to_block_body_cop?(body, keyword_line)
+          return false unless block_body_with_empty_lines_style?(body)
+
+          only_empty_lines_since_beginning?(body, keyword_line)
         end
 
         def keyword_locations_in_rescue(node)
@@ -154,6 +166,21 @@ module RuboCop
           end
 
           next_line == end_line
+        end
+
+        def only_empty_lines_since_beginning?(body, keyword_line)
+          start_line = block_body_start_line(body.parent)
+          previous_line = (keyword_line - 1).downto(start_line).find do |line_number|
+            !processed_source.lines[line_number - 1].strip.empty?
+          end
+
+          previous_line == start_line
+        end
+
+        def block_body_start_line(block_node)
+          return block_node.loc.begin.line unless block_node.arguments?
+
+          [block_node.loc.begin.line, block_node.arguments.last_line].max
         end
       end
     end
