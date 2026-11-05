@@ -906,6 +906,48 @@ RSpec.describe RuboCop::Cop::Lint::Void, :config do
     RUBY
   end
 
+  it 'registers an offense but does not correct a void interpolated string' do
+    expect_offense(<<~'RUBY')
+      def something
+        "#{foo}"
+        ^^^^^^^^ Literal `"#{foo}"` used in void context.
+        42
+      end
+    RUBY
+
+    expect_no_corrections
+  end
+
+  it 'registers an offense but does not correct a void array with an interpolated symbol' do
+    expect_offense(<<~'RUBY')
+      def something
+        [:"#{foo}"]
+        ^^^^^^^^^^^ Literal `[:"#{foo}"]` used in void context.
+        42
+      end
+    RUBY
+
+    expect_no_corrections
+  end
+
+  it 'corrects a void operator inside a void interpolated string' do
+    expect_offense(<<~'RUBY')
+      def something
+        "#{1 + 1; 2}"
+        ^^^^^^^^^^^^^ Literal `"#{1 + 1; 2}"` used in void context.
+             ^ Operator `+` used in void context.
+        42
+      end
+    RUBY
+
+    expect_correction(<<~'RUBY')
+      def something
+        "#{; 2}"
+        42
+      end
+    RUBY
+  end
+
   it 'registers two offenses for void literals in an initialize method' do
     expect_offense(<<~RUBY)
       def initialize
