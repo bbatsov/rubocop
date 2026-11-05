@@ -771,7 +771,7 @@ RSpec.describe RuboCop::Cop::Lint::ConstantReassignment, :config do
           File.write(File.join(tmpdir, 'a.rb'), "# frozen_string_literal: true\n")
 
           # Second run with the same cache: the `external_dependency_checksum`
-          # override in `ProjectIndexHelp` hashes indexed-file mtimes, so the
+          # override in `ProjectIndexHelp` hashes indexed-file contents, so the
           # change to a.rb invalidates b.rb's cache entry. Without the override
           # b.rb would hit a stale cache and still report a collision.
           expect(cop_offenses(tmpdir, cache_root: cache_dir)).to be_empty

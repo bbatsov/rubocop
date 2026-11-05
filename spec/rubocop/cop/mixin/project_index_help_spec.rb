@@ -34,6 +34,13 @@ RSpec.describe RuboCop::Cop::ProjectIndexHelp, :project_index do
   end
 
   describe '#project_index_signature' do
+    def signature_of(path)
+      helper = helper_class.new
+      helper.project_index = RuboCop::ProjectIndexLoader.build_index([path])
+
+      helper.project_index_signature
+    end
+
     it 'is computed once per index across cops sharing it' do
       index = build_index('file:///foo.rb' => "class Foo\nend\n")
       first, second = Array.new(2) do
@@ -53,6 +60,32 @@ RSpec.describe RuboCop::Cop::ProjectIndexHelp, :project_index do
       end
 
       expect(first.project_index_signature).not_to eq(second.project_index_signature)
+    end
+
+    it 'does not change when an indexed file is touched without changing its contents' do
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, 'foo.rb')
+        File.write(path, "class Foo\nend\n")
+        signature = signature_of(path)
+
+        File.utime(Time.now + 60, Time.now + 60, path)
+
+        expect(signature_of(path)).to eq(signature)
+      end
+    end
+
+    it 'changes when the contents of an indexed file change' do
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, 'foo.rb')
+        File.write(path, "class Foo\nend\n")
+        signature = signature_of(path)
+
+        mtime = File.mtime(path)
+        File.write(path, "class Bar\nend\n")
+        File.utime(mtime, mtime, path)
+
+        expect(signature_of(path)).not_to eq(signature)
+      end
     end
   end
 end
