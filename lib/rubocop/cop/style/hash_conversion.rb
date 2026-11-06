@@ -100,7 +100,9 @@ module RuboCop
 
         def register_offense_for_hash(node, hash_argument)
           add_offense(node, message: MSG_LITERAL_HASH_ARG) do |corrector|
-            corrector.replace(node, "{#{hash_argument.source}}")
+            replacement = hash_argument.source
+            replacement = "{#{replacement}}" unless hash_argument.braces?
+            corrector.replace(node, replacement)
             add_parentheses_to_parent_call(node, corrector)
           end
         end
