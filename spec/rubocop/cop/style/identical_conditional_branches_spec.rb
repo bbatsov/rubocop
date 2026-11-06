@@ -1107,6 +1107,150 @@ RSpec.describe RuboCop::Cop::Style::IdenticalConditionalBranches, :config do
         end
       end
 
+      context 'with `return`' do
+        it 'registers an offense but does not correct' do
+          expect_offense(<<~RUBY)
+            x = case foo
+                when 1
+                  bar
+                  return
+                  ^^^^^^ Move `return` out of the conditional.
+                else
+                  baz
+                  return
+                  ^^^^^^ Move `return` out of the conditional.
+                end
+          RUBY
+
+          expect_no_corrections
+        end
+      end
+
+      context 'with `next` and an operator assignment' do
+        it 'registers an offense but does not correct' do
+          expect_offense(<<~RUBY)
+            x ||= case foo
+                  in 1
+                    bar
+                    next
+                    ^^^^ Move `next` out of the conditional.
+                  else
+                    baz
+                    next
+                    ^^^^ Move `next` out of the conditional.
+                  end
+          RUBY
+
+          expect_no_corrections
+        end
+      end
+
+      context 'with `return` in a modifier `if`' do
+        it 'registers an offense but does not correct' do
+          expect_offense(<<~RUBY)
+            x = if foo
+                  bar
+                  return if qux
+                  ^^^^^^^^^^^^^ Move `return if qux` out of the conditional.
+                else
+                  baz
+                  return if qux
+                  ^^^^^^^^^^^^^ Move `return if qux` out of the conditional.
+                end
+          RUBY
+
+          expect_no_corrections
+        end
+      end
+
+      context 'with `return` in parentheses used as a receiver' do
+        it 'registers an offense but does not correct' do
+          expect_offense(<<~RUBY)
+            (case foo
+            when bar
+              return
+              ^^^^^^ Move `return` out of the conditional.
+            else
+              return
+              ^^^^^^ Move `return` out of the conditional.
+            end).to_s
+          RUBY
+
+          expect_no_corrections
+        end
+      end
+
+      context 'with `return` in a `begin` block used as a receiver' do
+        it 'registers an offense but does not correct' do
+          expect_offense(<<~RUBY)
+            begin
+              case foo
+              when bar
+                return
+                ^^^^^^ Move `return` out of the conditional.
+              else
+                return
+                ^^^^^^ Move `return` out of the conditional.
+              end
+            end.to_s
+          RUBY
+
+          expect_no_corrections
+        end
+      end
+
+      context 'with `return` in a `begin` block whose value is not used' do
+        it 'registers an offense and corrects' do
+          expect_offense(<<~RUBY)
+            begin
+              case foo
+              when bar
+                return
+                ^^^^^^ Move `return` out of the conditional.
+              else
+                return
+                ^^^^^^ Move `return` out of the conditional.
+              end
+            end
+            qux
+          RUBY
+
+          expect_correction(<<~RUBY)
+            begin
+              case foo
+              when bar
+              else
+              end
+              return
+            end
+            qux
+          RUBY
+        end
+      end
+
+      context 'with `next` in a block' do
+        it 'registers an offense and corrects' do
+          expect_offense(<<~RUBY)
+            x = case foo
+                when bar
+                  items.each { next }
+                  ^^^^^^^^^^^^^^^^^^^ Move `items.each { next }` out of the conditional.
+                else
+                  items.each { next }
+                  ^^^^^^^^^^^^^^^^^^^ Move `items.each { next }` out of the conditional.
+                end
+          RUBY
+
+          expect_correction(<<~RUBY)
+            case foo
+                when bar
+                else
+                end
+            x = items.each { next }
+          RUBY
+        end
+      end
+
       context 'with `case`' do
         it 'registers an offense and corrects' do
           expect_offense(<<~RUBY)
