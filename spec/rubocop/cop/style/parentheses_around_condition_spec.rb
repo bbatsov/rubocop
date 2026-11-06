@@ -204,6 +204,22 @@ RSpec.describe RuboCop::Cop::Style::ParenthesesAroundCondition, :config do
     RUBY
   end
 
+  it 'does not register an offense when parentheses in multiple expressions separated by a line break' do
+    expect_no_offenses(<<~RUBY)
+      if (foo
+          bar)
+        do_something
+      end
+    RUBY
+  end
+
+  it 'does not register an offense when parentheses in multiple expressions of a modifier `until` separated by a line break' do
+    expect_no_offenses(<<~RUBY)
+      do_something until (foo
+                          bar)
+    RUBY
+  end
+
   context 'safe assignment is allowed' do
     it 'accepts variable assignment in condition surrounded with parentheses' do
       expect_no_offenses(<<~RUBY)

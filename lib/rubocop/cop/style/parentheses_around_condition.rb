@@ -56,7 +56,6 @@ module RuboCop
       class ParenthesesAroundCondition < Base
         include SafeAssignment
         include Parentheses
-        include RangeHelp
         extend AutoCorrector
 
         def on_if(node)
@@ -82,7 +81,8 @@ module RuboCop
 
           control_op_condition(cond) do |first_child, rest_children|
             return if require_parentheses?(node, first_child)
-            return if semicolon_separated_expressions?(first_child, rest_children)
+            # `(foo; bar)` and `(foo\n bar)` would leave only `foo` as the condition.
+            return if rest_children.any?
             return if modifier_op?(first_child) || first_child.masgn_type?
             return if command_call_assignment?(first_child)
             return if parens_allowed?(cond)
@@ -99,14 +99,6 @@ module RuboCop
           return false unless condition_body.any_block_type?
 
           condition_body.send_node.block_literal? && condition_body.keywords?
-        end
-
-        def semicolon_separated_expressions?(first_exp, rest_exps)
-          return false unless (second_exp = rest_exps.first)
-
-          range = range_between(first_exp.source_range.end_pos, second_exp.source_range.begin_pos)
-
-          range.source.include?(';')
         end
 
         def modifier_op?(node)

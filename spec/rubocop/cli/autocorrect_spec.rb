@@ -440,6 +440,22 @@ RSpec.describe 'RuboCop::CLI --autocorrect', :isolated_environment do # rubocop:
     RUBY
   end
 
+  it 'corrects `Style/Semicolon` without `Style/ParenthesesAroundCondition` removing parentheses around multiple expressions' do
+    create_file('example.rb', <<~RUBY)
+      if (foo; bar)
+        do_something
+      end
+    RUBY
+    expect(cli.run(['--autocorrect', '--only',
+                    'Style/ParenthesesAroundCondition,Style/Semicolon'])).to eq(0)
+    expect(File.read('example.rb')).to eq(<<~RUBY)
+      if (foo
+       bar)
+        do_something
+      end
+    RUBY
+  end
+
   it 'corrects `Style/EmptyStringInsideInterpolation` with `Style/MethodCallWithArgsParentheses` omitting parentheses' do
     create_file('.rubocop.yml', <<~YAML)
       Style/EmptyStringInsideInterpolation:
