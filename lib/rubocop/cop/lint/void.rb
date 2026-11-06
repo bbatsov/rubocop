@@ -193,6 +193,8 @@ module RuboCop
           end
 
           add_offense(node, message: format(LIT_MSG, lit: node.source)) do |corrector|
+            next if node.each_descendant(:begin).any?
+
             autocorrect_void_expression(corrector, node)
           end
         end
