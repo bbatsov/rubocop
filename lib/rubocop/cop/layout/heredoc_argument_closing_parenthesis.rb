@@ -58,9 +58,10 @@ module RuboCop
               'HEREDOC parameter on the same line as the HEREDOC opening.'
 
         # `Layout/MultilineMethodCallBraceLayout` can move the same closing parenthesis after
-        # the last argument in the same pass, and both insertions are kept.
+        # the last argument in the same pass, and both insertions are kept. `Style/RaiseArgs`
+        # removes the parentheses of `raise Error.new(<<~MSG ...)` around the moved one.
         def self.autocorrect_incompatible_with
-          [Layout::MultilineMethodCallBraceLayout, Style::TrailingCommaInArguments]
+          [Layout::MultilineMethodCallBraceLayout, Style::RaiseArgs, Style::TrailingCommaInArguments]
         end
 
         def on_send(node)

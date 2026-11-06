@@ -1373,6 +1373,31 @@ RSpec.describe 'RuboCop::CLI --autocorrect', :isolated_environment do # rubocop:
     RUBY
   end
 
+  it 'corrects `Style/RaiseArgs` with `Layout/HeredocArgumentClosingParenthesis`' do
+    create_file('.rubocop.yml', <<~YAML)
+      Layout/HeredocArgumentClosingParenthesis:
+        Enabled: true
+    YAML
+    create_file('example.rb', <<~RUBY)
+      raise RuntimeError.new(
+        <<~MSG
+          message
+        MSG
+      )
+    RUBY
+
+    expect(
+      cli.run(
+        ['--autocorrect-all', '--only', 'Layout/HeredocArgumentClosingParenthesis,Style/RaiseArgs']
+      )
+    ).to eq(0)
+    expect(File.read('example.rb')).to eq(<<~RUBY)
+      raise RuntimeError, <<~MSG
+          message
+        MSG
+    RUBY
+  end
+
   it 'corrects `Style/RedundantInterpolation` with `Style/MethodCallWithArgsParentheses`' do
     create_file('.rubocop.yml', <<~YAML)
       Style/MethodCallWithArgsParentheses:
