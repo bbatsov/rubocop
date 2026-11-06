@@ -102,6 +102,14 @@ RSpec.describe RuboCop::Cop::Lint::Void, :config do
         nil
       RUBY
     end
+
+    it "accepts methods called by dot with multiple arguments for #{op}" do
+      expect_no_offenses(<<~RUBY)
+        a.#{op}(b, c)
+        a.#{op} b, c
+        nil
+      RUBY
+    end
   end
 
   sign_unary_operators = %i[+ -]

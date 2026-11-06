@@ -157,6 +157,7 @@ module RuboCop
         def check_void_op(node, &block)
           node = node.children.first while node&.begin_type?
           return unless node&.call_type? && OPERATORS.include?(node.method_name)
+          return if node.arguments.size > 1
           if !UNARY_OPERATORS.include?(node.method_name) && node.loc.dot && node.arguments.none?
             return
           end
