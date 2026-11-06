@@ -1570,6 +1570,51 @@ RSpec.describe 'RuboCop::CLI --autocorrect', :isolated_environment do # rubocop:
     RUBY
   end
 
+  it 'corrects `EnforcedStyle: omit_parentheses` of `Style/MethodCallWithArgsParentheses` with `Lint/HashNewWithKeywordArgumentsAsDefault`' do
+    create_file('.rubocop.yml', <<~YAML)
+      Style/MethodCallWithArgsParentheses:
+        EnforcedStyle: omit_parentheses
+    YAML
+
+    create_file('example.rb', <<~RUBY)
+      Hash.new(foo: bar)
+    RUBY
+
+    expect(
+      cli.run(
+        [
+          '--autocorrect-all', '--only',
+          'Lint/HashNewWithKeywordArgumentsAsDefault,Style/MethodCallWithArgsParentheses'
+        ]
+      )
+    ).to eq(0)
+
+    expect(File.read('example.rb')).to eq(<<~RUBY)
+      Hash.new({foo: bar})
+    RUBY
+  end
+
+  it 'corrects `EnforcedStyle: omit_parentheses` of `Style/MethodCallWithArgsParentheses` with `Style/EmptyLiteral`' do
+    create_file('.rubocop.yml', <<~YAML)
+      Style/MethodCallWithArgsParentheses:
+        EnforcedStyle: omit_parentheses
+    YAML
+
+    create_file('example.rb', <<~RUBY)
+      foo(Hash.new, bar)
+    RUBY
+
+    expect(
+      cli.run(
+        ['--autocorrect-all', '--only', 'Style/EmptyLiteral,Style/MethodCallWithArgsParentheses']
+      )
+    ).to eq(0)
+
+    expect(File.read('example.rb')).to eq(<<~RUBY)
+      foo({}, bar)
+    RUBY
+  end
+
   it 'corrects `EnforcedStyle: omit_parentheses` of `Style/MethodCallWithArgsParentheses` with `Style/StructInheritance`' do
     create_file('.rubocop.yml', <<~YAML)
       Style/MethodCallWithArgsParentheses:
