@@ -249,7 +249,7 @@ module RuboCop
           end_delimiter = str_node.loc.end.source
 
           # If there is any interpolation, the delimiters need to be changed potentially
-          if node.each_descendant(:dstr, :dsym).any?
+          if (interpolated = node.each_descendant(:dstr, :dsym).any?)
             case start_delimiter
             when "'"
               start_delimiter = end_delimiter = '"'
@@ -258,7 +258,17 @@ module RuboCop
             end
           end
 
-          "#{start_delimiter}#{escape_control_chars(string)}#{end_delimiter}"
+          quoted = "#{start_delimiter}#{escape_control_chars(string)}#{end_delimiter}"
+          return quoted if interpolated || string_literal_of?(quoted, string)
+
+          string.inspect
+        end
+
+        # The original delimiters can only be kept if the formatted string needs no escaping
+        def string_literal_of?(source, string)
+          literal = parse(source).ast
+
+          literal&.str_type? && literal.value == string
         end
 
         # Escape any control characters in the string (eg. `\t` or `\n` become `\\t` or `\\n`)

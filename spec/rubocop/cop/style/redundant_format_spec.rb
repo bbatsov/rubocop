@@ -506,6 +506,52 @@ RSpec.describe RuboCop::Cop::Style::RedundantFormat, :config do
             "foo\a\b\t\n\v\f\r\e"
           RUBY
         end
+
+        it 'registers an offense and corrects when a single-quoted format string gets a control character' do
+          expect_offense(<<~'RUBY', method: method)
+            %{method}('%s', "a\nb")
+            ^{method}^^^^^^^^^^^^^^ Use `"a\nb"` directly instead of `%{method}`.
+          RUBY
+
+          expect_correction(<<~'RUBY')
+            "a\nb"
+          RUBY
+        end
+      end
+
+      context 'when the formatted string contains characters that need escaping' do
+        it 'registers an offense and corrects with a quote matching the delimiter' do
+          expect_offense(<<~'RUBY', method: method)
+            %{method}("%s", 'a"b')
+            ^{method}^^^^^^^^^^^^^ Use `"a\"b"` directly instead of `%{method}`.
+          RUBY
+
+          expect_correction(<<~'RUBY')
+            "a\"b"
+          RUBY
+        end
+
+        it 'registers an offense and corrects with a backslash' do
+          expect_offense(<<~'RUBY', method: method)
+            %{method}('%s', '\\')
+            ^{method}^^^^^^^^^^^^ Use `"\\"` directly instead of `%{method}`.
+          RUBY
+
+          expect_correction(<<~'RUBY')
+            "\\"
+          RUBY
+        end
+
+        it 'registers an offense and corrects with an interpolation-like sequence' do
+          expect_offense(<<~'RUBY', method: method)
+            %{method}("%s", '#{x}')
+            ^{method}^^^^^^^^^^^^^^ Use `"\#{x}"` directly instead of `%{method}`.
+          RUBY
+
+          expect_correction(<<~'RUBY')
+            "\#{x}"
+          RUBY
+        end
       end
 
       context 'with heredocs' do
