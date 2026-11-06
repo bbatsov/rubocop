@@ -212,6 +212,20 @@ RSpec.describe RuboCop::Cop::Style::EmptyLiteral, :config do
       RUBY
     end
 
+    it 'autocorrects Hash.new to {} when it is the first argument to an index method' do
+      expect_offense(<<~RUBY)
+        x[Hash.new, foo]
+          ^^^^^^^^ Use hash literal `{}` instead of `Hash.new`.
+        Hash[Hash[]]
+             ^^^^^^ Use hash literal `{}` instead of `Hash[]`.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        x[{}, foo]
+        Hash[{}]
+      RUBY
+    end
+
     it 'autocorrects Hash([]) to {} and wraps it in parentheses ' \
        'when it is the only argument to a method call' do
       expect_offense(<<~RUBY)
