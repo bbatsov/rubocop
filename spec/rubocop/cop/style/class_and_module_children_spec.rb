@@ -519,6 +519,21 @@ RSpec.describe RuboCop::Cop::Style::ClassAndModuleChildren, :config do
       RUBY
     end
 
+    it 'registers an offense and corrects when the child is indented more than its `end`' do
+      expect_offense(<<~RUBY)
+        module A
+               ^ Use compact module/class definition instead of nested style.
+              class B
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class A::B
+        end
+      RUBY
+    end
+
     context 'with tab indentation enforced' do
       let(:other_cops) { { 'Layout/IndentationStyle' => { 'EnforcedStyle' => 'tabs' } } }
 

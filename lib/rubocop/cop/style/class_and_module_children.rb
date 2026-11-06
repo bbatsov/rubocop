@@ -207,27 +207,23 @@ module RuboCop
         end
 
         def remove_end(corrector, body)
-          range = if same_line?(body.loc.name, body.loc.end)
-                    single_line_end_range(body)
-                  else
-                    multiline_end_range(body)
-                  end
+          range = begins_its_line?(body.loc.end) ? end_line_range(body) : inline_end_range(body)
 
           corrector.remove(range)
         end
 
-        def single_line_end_range(body)
+        def end_line_range(body)
+          end_keyword = body.loc.end
+
+          range_between(end_keyword.begin_pos - end_keyword.column, end_keyword.end_pos + 1)
+        end
+
+        def inline_end_range(body)
           raw = processed_source.raw_source
           pos = body.loc.end.begin_pos
           pos -= 1 while raw[pos - 1] == ' '
           pos -= 1 if raw[pos - 1] == ';'
           range_between(pos, body.loc.end.end_pos)
-        end
-
-        def multiline_end_range(body)
-          remove_begin_pos = body.loc.end.begin_pos - leading_spaces(body).size
-          adjustment = processed_source.raw_source[remove_begin_pos] == ';' ? 0 : 1
-          range_between(remove_begin_pos, body.loc.end.end_pos + adjustment)
         end
 
         def unindent(corrector, node)
