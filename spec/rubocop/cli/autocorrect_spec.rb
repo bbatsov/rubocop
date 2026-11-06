@@ -419,6 +419,69 @@ RSpec.describe 'RuboCop::CLI --autocorrect', :isolated_environment do # rubocop:
     RUBY
   end
 
+  it 'corrects `EnforcedShorthandSyntax: never` of `Style/HashSyntax` with `Style/Semicolon` for an omitted hash value' do
+    create_file('.rubocop.yml', <<~YAML)
+      AllCops:
+        TargetRubyVersion: 3.1
+      Style/HashSyntax:
+        EnforcedShorthandSyntax: never
+    YAML
+    create_file('example.rb', <<~RUBY)
+      do_something 1, key:;
+      other
+    RUBY
+
+    expect(cli.run(['--autocorrect-all', '--only', 'Style/HashSyntax,Style/Semicolon'])).to eq(0)
+    expect(File.read('example.rb')).to eq(<<~RUBY)
+      do_something(1, key: key)
+      other
+    RUBY
+  end
+
+  it 'corrects `Style/MethodCallWithArgsParentheses` with `Style/Semicolon` for an omitted hash value' do
+    create_file('.rubocop.yml', <<~YAML)
+      AllCops:
+        TargetRubyVersion: 3.1
+    YAML
+    create_file('example.rb', <<~RUBY)
+      x = obj.do_something 1, key:;
+      other
+    RUBY
+
+    expect(
+      cli.run(
+        ['--autocorrect-all', '--only', 'Style/MethodCallWithArgsParentheses,Style/Semicolon']
+      )
+    ).to eq(0)
+    expect(File.read('example.rb')).to eq(<<~RUBY)
+      x = obj.do_something(1, key:)
+      other
+    RUBY
+  end
+
+  it 'corrects `Style/SuperWithArgsParentheses` with `Style/Semicolon` for an omitted hash value' do
+    create_file('.rubocop.yml', <<~YAML)
+      AllCops:
+        TargetRubyVersion: 3.1
+    YAML
+    create_file('example.rb', <<~RUBY)
+      def do_something
+        super 1, key:;
+        other
+      end
+    RUBY
+
+    expect(
+      cli.run(['--autocorrect-all', '--only', 'Style/SuperWithArgsParentheses,Style/Semicolon'])
+    ).to eq(0)
+    expect(File.read('example.rb')).to eq(<<~RUBY)
+      def do_something
+        super(1, key:)
+        other
+      end
+    RUBY
+  end
+
   it 'does not correct `AllowInMultilineConditions: true` of `Style/ParenthesesAroundCondition` with `Style/RedundantParentheses`' do
     create_file('.rubocop.yml', <<~YAML)
       Style/ParenthesesAroundCondition:

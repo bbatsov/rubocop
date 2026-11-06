@@ -143,11 +143,15 @@ module RuboCop
         NO_MIXED_KEYS_STYLES = %i[ruby19_no_mixed_keys no_mixed_keys].freeze
 
         # Omitting the last hash value of a call without parentheses adds the parentheses,
-        # which `Style/MethodCallWithArgsParentheses` and `Style/SuperWithArgsParentheses`
-        # would add again in the same pass. Likewise, `Style/RedundantReturn` would add again
-        # the braces wrapped around a braceless hash returned with `return`.
+        # which `Style/MethodCallWithArgsParentheses`, `Style/SuperWithArgsParentheses` and
+        # `Style/Semicolon` (for `key:;`) would add again in the same pass. Likewise,
+        # `Style/RedundantReturn` would add again the braces wrapped around a braceless hash
+        # returned with `return`.
         def self.autocorrect_incompatible_with
-          [Style::MethodCallWithArgsParentheses, Style::RedundantReturn, Style::SuperWithArgsParentheses]
+          [
+            Style::MethodCallWithArgsParentheses, Style::RedundantReturn, Style::Semicolon,
+            Style::SuperWithArgsParentheses
+          ]
         end
 
         def on_hash(node)
