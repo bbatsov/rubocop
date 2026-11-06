@@ -362,7 +362,7 @@ module RuboCop
           if argument_less_modifier_node
             corrector.insert_after(argument_less_modifier_node, "\n\n#{source}")
           elsif (ancestor = node.each_ancestor(:class, :module, :sclass).first)
-            corrector.insert_before(ancestor.loc.end, "#{node.method_name}\n\n#{source}\n")
+            insert_before_end(corrector, ancestor, "#{node.method_name}\n\n#{source}\n")
           else
             corrector.replace(node, "#{node.method_name}\n\n#{source}")
             return
@@ -371,14 +371,27 @@ module RuboCop
           remove_nodes(corrector, *def_nodes, node)
         end
 
+        def insert_before_end(corrector, ancestor, source)
+          end_keyword = ancestor.loc.end
+          source = "\n#{source}" unless begins_its_line?(end_keyword)
+
+          corrector.insert_before(end_keyword, source)
+        end
+
         def insert_inline_modifier(corrector, node, modifier_name)
           corrector.insert_before(node, "#{modifier_name} ")
         end
 
         def remove_nodes(corrector, *nodes)
           nodes.each do |node|
-            corrector.remove(range_with_comments_and_lines(node))
+            range = on_own_lines?(node) ? range_with_comments_and_lines(node) : node.source_range
+
+            corrector.remove(range)
           end
+        end
+
+        def on_own_lines?(node)
+          range_by_whole_lines(node.source_range).source.strip == node.source
         end
 
         def remove_modifier_node_within_begin(corrector, modifier_node, begin_node)
