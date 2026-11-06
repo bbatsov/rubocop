@@ -184,6 +184,22 @@ module RuboCop
       @clusivity_config_exists_cache[badge.to_s] = cop_config['Include'] || cop_config['Exclude']
     end
 
+    # Loading a plugin merges the configuration of its cops into the default configuration,
+    # which only the configurations resolved afterwards are based on. For a configuration
+    # resolved by `ConfigLoader`, a cop that has an entry in the default configuration but not in
+    # this configuration therefore comes from a plugin that this configuration does not load,
+    # such as a `rubocop-rspec` cop for the root `.rubocop.yml` when only `spec/.rubocop.yml`
+    # loads `rubocop-rspec`.
+    #
+    # @return [Boolean] whether the default configuration has an entry for the cop of the badge
+    #   that this configuration does not have
+    # @api private
+    def missing_default_config_for?(badge)
+      cop_name = badge.to_s
+
+      !key?(cop_name) && ConfigLoader.default_configuration.key?(cop_name)
+    end
+
     # @return [Config] for the given department name.
     # Note: the 'Enabled' attribute will be present only if specified
     # at the department's level

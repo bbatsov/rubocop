@@ -2324,6 +2324,33 @@ RSpec.describe RuboCop::CLI, :isolated_environment do
       end
     end
 
+    context 'when using `plugins` to enable a plugin in a subdirectory' do
+      it 'does not apply the plugin cops to files outside the subdirectory' do
+        create_file('spec/.rubocop.yml', <<~YAML)
+          plugins:
+            - rubocop-internal_affairs
+        YAML
+        create_file('spec/example_spec.rb', <<~RUBY)
+          # frozen_string_literal: true
+
+          expect(cop.messages).to eq([described_class::MSG])
+        RUBY
+        create_file('example.rb', <<~RUBY)
+          # frozen_string_literal: true
+
+          expect(cop.messages).to eq([described_class::MSG])
+        RUBY
+
+        expect(cli.run(['--format', 'simple', 'spec', 'example.rb'])).to eq(1)
+        expect($stdout.string).to eq(<<~RESULT)
+          == spec/example_spec.rb ==
+          C:  3: 29: InternalAffairs/UselessMessageAssertion: Do not specify cop behavior using described_class::MSG.
+
+          2 files inspected, 1 offense detected
+        RESULT
+      end
+    end
+
     context 'when using `require` to enable a plugin' do
       it 'exits with 0 with warning' do
         create_file('.rubocop.yml', <<~YAML)

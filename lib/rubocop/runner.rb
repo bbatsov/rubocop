@@ -623,6 +623,7 @@ module RuboCop
     def mobilize_cop_badge?(badge, config)
       return false if badge.department == :Test
       return false if badge.match_name?(@options[:except])
+      return false if config.missing_default_config_for?(badge)
 
       if @options[:only]
         badge.match_name?(@options[:only])
