@@ -163,6 +163,14 @@ RSpec.describe RuboCop::Cop::Style::EmptyStringInsideInterpolation, :config do
         )}"
       RUBY
     end
+
+    it 'does not register an offense when an `if` without an `else` branch has an empty outcome' do
+      expect_no_offenses(<<~'RUBY')
+        "#{if condition
+             nil
+           end}"
+      RUBY
+    end
   end
 
   context 'when EnforcedStyle is ternary' do
