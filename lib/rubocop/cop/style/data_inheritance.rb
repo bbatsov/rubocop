@@ -44,6 +44,12 @@ module RuboCop
 
         minimum_target_ruby_version 3.2
 
+        # The appended `do` block is taken as the block of an enclosing call whose parentheses
+        # are omitted in the same pass.
+        def self.autocorrect_incompatible_with
+          [Style::MethodCallWithArgsParentheses]
+        end
+
         def on_class(node)
           return unless data_define?(node.parent_class)
           return if defines_constants?(node.body)
