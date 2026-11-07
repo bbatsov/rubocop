@@ -580,6 +580,25 @@ RSpec.describe RuboCop::Cop::Style::GuardClause, :config do
     RUBY
   end
 
+  it 'registers an offense and corrects an ending `if` with empty parentheses as its body' do
+    expect_offense(<<~RUBY)
+      def func
+        if something
+        ^^ Use a guard clause (`return unless something`) instead of wrapping the code inside a conditional expression.
+          ()
+        end
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      def func
+        return unless something
+          ()
+       #{trailing_whitespace}
+      end
+    RUBY
+  end
+
   it 'does not register an offense when assigning the result of a guard condition with `else`' do
     expect_no_offenses(<<~RUBY)
       def func
