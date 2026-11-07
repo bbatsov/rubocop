@@ -20,6 +20,10 @@ module RuboCop
 
         MSG = 'Use parentheses for `super` with arguments.'
 
+        def self.autocorrect_incompatible_with
+          [Style::Semicolon]
+        end
+
         def on_super(node)
           return if node.parenthesized?
 

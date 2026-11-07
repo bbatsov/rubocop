@@ -248,6 +248,7 @@ module RuboCop
             Style::ParenthesesAroundCondition,
             Style::RedundantParentheses,
             Style::RescueModifier,
+            Style::Semicolon,
             Style::TernaryParentheses,
             Style::TrailingCommaInArguments
           ]
