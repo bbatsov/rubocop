@@ -22,8 +22,15 @@ module RuboCop
         def_node_matcher :constant_definition?, '{class module}'
 
         # @!method empty_line_required?(node)
-        def_node_matcher :empty_line_required?,
-                         '{any_def class module (send nil? {:private :protected :public})}'
+        def_node_matcher :empty_line_required?, <<~PATTERN
+          {
+            any_def class module #bare_access_modifier_send?
+            (if _ #bare_access_modifier_send? nil?) (if _ nil? #bare_access_modifier_send?)
+          }
+        PATTERN
+
+        # @!method bare_access_modifier_send?(node)
+        def_node_matcher :bare_access_modifier_send?, '(send nil? {:private :protected :public})'
 
         def check(node, body, adjusted_first_line: nil)
           return if valid_body_style?(body)

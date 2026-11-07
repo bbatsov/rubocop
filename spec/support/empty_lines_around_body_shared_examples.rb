@@ -145,6 +145,39 @@ RSpec.shared_examples 'empty_lines_around_class_or_module_body' do |type|
       end
     end
 
+    context 'when first child is a conditional access modifier' do
+      it 'registers and corrects an offense for a modifier form' do
+        expect_offense(<<~RUBY)
+          #{type} SomeObject
+            private if condition
+          ^ #{missing_begin}
+            def do_something; end
+          end
+          ^ #{missing_end}
+        RUBY
+
+        expect_correction(<<~RUBY)
+          #{type} SomeObject
+
+            private if condition
+            def do_something; end
+
+          end
+        RUBY
+      end
+
+      it 'registers no offense for an `unless` modifier form with blank lines' do
+        expect_no_offenses(<<~RUBY)
+          #{type} SomeObject
+
+            private unless condition
+            def do_something; end
+
+          end
+        RUBY
+      end
+    end
+
     context 'when first child is NOT a method' do
       it "does not require blank line at the beginning of #{type} body " \
          'but requires blank line before first def definition ' \
