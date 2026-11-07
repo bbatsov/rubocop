@@ -195,7 +195,41 @@ RSpec.describe RuboCop::Server::Cache do
       end
     end
 
+    describe '.pid', :isolated_environment do
+      before { cache_class.cache_root_path = Dir.pwd }
+
+      it 'returns the pid from the pid file' do
+        cache_class.pid_path.write('4242')
+
+        expect(cache_class.pid).to eq(4242)
+      end
+
+      it 'returns nil when the pid file is empty' do
+        cache_class.pid_path.write('')
+
+        expect(cache_class.pid).to be_nil
+      end
+
+      it 'returns nil when the pid file has no valid pid' do
+        cache_class.pid_path.write('garbage')
+
+        expect(cache_class.pid).to be_nil
+      end
+
+      it 'returns nil without creating the cache directory when the pid file is missing' do
+        expect(cache_class.pid).to be_nil
+        expect(File).not_to exist(File.join(Dir.pwd, 'rubocop_cache'))
+      end
+    end
+
     describe '.pid_running?', :isolated_environment do
+      it 'is false when the pid file is empty' do
+        cache_class.cache_root_path = Dir.pwd
+        cache_class.pid_path.write('')
+
+        expect(cache_class).not_to be_pid_running
+      end
+
       it 'does not create the cache directory when checking for a running server' do
         cache_class.cache_root_path = Dir.pwd
         cache_root = File.join(Dir.pwd, 'rubocop_cache')
@@ -245,6 +279,46 @@ RSpec.describe RuboCop::Server::Cache do
           .to receive(:root_dir_from_toplevel_config).and_raise(Errno::EPERM)
 
         expect(described_class).not_to be_pid_running
+      end
+    end
+
+    describe '.write_pid_file', :isolated_environment do
+      before { cache_class.cache_root_path = Dir.pwd }
+
+      it 'writes the pid file while the block runs' do
+        cache_class.write_pid_file do
+          expect(cache_class.pid_path.read).to eq(Process.pid.to_s)
+        end
+      end
+
+      it 'removes the cache dir after the block' do
+        cache_class.write_pid_file { nil }
+
+        expect(cache_class.dir_path).not_to exist
+        expect(Dir.children(cache_class.cache_path)).to be_empty
+      end
+
+      it 'does not remove the files of a server started during cleanup' do
+        allow(FileUtils).to receive(:rm_rf).and_wrap_original do |method, *args, **kwargs|
+          cache_class.pid_path.write('new server')
+          method.call(*args, **kwargs)
+        end
+
+        cache_class.write_pid_file { nil }
+
+        expect(cache_class.pid_path.read).to eq('new server')
+      end
+
+      it 'moves the cache dir away before removing its contents' do
+        expect(File).to receive(:rename).with(cache_class.dir_path, anything).and_call_original
+
+        cache_class.write_pid_file { nil }
+      end
+
+      it 'does not fail when the cache dir is already gone' do
+        expect do
+          cache_class.write_pid_file { cache_class.dir_path.rmtree }
+        end.not_to raise_error
       end
     end
   end

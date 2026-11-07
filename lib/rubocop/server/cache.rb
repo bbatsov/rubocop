@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require 'digest'
+require 'fileutils'
 require 'pathname'
+require 'securerandom'
 require 'yaml'
 require_relative '../cache_config'
 require_relative '../config_finder'
@@ -110,10 +112,19 @@ module RuboCop
           dir.join('stderr')
         end
 
+        def pid
+          pid = pid_path(create_dir: false).read.to_i
+          pid if pid.positive?
+        rescue Errno::ENOENT, Errno::EACCES, Errno::EPERM, Errno::EROFS, Errno::ENAMETOOLONG,
+               Errno::ENOTDIR
+          nil
+        end
+
         def pid_running?
-          Process.kill(0, pid_path(create_dir: false).read.to_i) == 1
-        rescue Errno::ESRCH, Errno::ENOENT, Errno::EACCES, Errno::EPERM, Errno::EROFS,
-               Errno::ENAMETOOLONG, Errno::ENOTDIR
+          return false unless (pid = self.pid)
+
+          Process.kill(0, pid) == 1
+        rescue Errno::ESRCH, Errno::EPERM
           false
         end
 
@@ -134,7 +145,7 @@ module RuboCop
           pid_path.write(Process.pid)
           yield
         ensure
-          dir.rmtree
+          remove_dir
         end
 
         def write_status_file(status)
@@ -182,6 +193,14 @@ module RuboCop
 
           require 'yaml'
           YAML.safe_load(yaml_code, permitted_classes: [Regexp, Symbol], aliases: true) || {}
+        end
+
+        def remove_dir
+          removed_dir_path = "#{dir_path}.#{SecureRandom.hex(8)}.removed"
+          File.rename(dir_path, removed_dir_path)
+          FileUtils.rm_rf(removed_dir_path)
+        rescue Errno::ENOENT
+          nil
         end
       end
     end
