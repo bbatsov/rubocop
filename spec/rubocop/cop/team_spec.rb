@@ -449,7 +449,6 @@ RSpec.describe RuboCop::Cop::Team do
           RuboCop::Config.new('Layout/LineLength' => { 'Enabled' => false }), ''
         )
       end
-      let(:cop_classes) { RuboCop::Cop::Registry.global }
       let(:fragments) do
         [
           fragment(long_line),
