@@ -51,7 +51,7 @@ module RuboCop
           add_offense(node.loc.end, message: message(node)) do |corrector|
             replacement = "\n#{offense_range.source.lstrip}"
 
-            if (heredoc = last_heredoc_argument(node.body))
+            if (heredoc = heredoc_argument_after_block_end(node))
               corrector.remove(offense_range)
               corrector.insert_after(heredoc.loc.heredoc_end, replacement)
             else
@@ -62,6 +62,12 @@ module RuboCop
 
         def message(node)
           format(MSG, line: node.loc.end.line, column: node.loc.end.column + 1)
+        end
+
+        def heredoc_argument_after_block_end(node)
+          return unless (heredoc = last_heredoc_argument(node.body))
+
+          heredoc if heredoc.loc.heredoc_end.begin_pos > node.loc.end.begin_pos
         end
 
         def last_heredoc_argument(node)
