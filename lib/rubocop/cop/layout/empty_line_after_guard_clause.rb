@@ -111,10 +111,10 @@ module RuboCop
         end
 
         def correct_style?(node)
-          !node.if_branch&.guard_clause? ||
-            next_line_rescue_or_ensure?(node) ||
-            next_sibling_parent_empty_or_else?(node) ||
-            next_sibling_empty_or_guard_clause?(node)
+          return true unless node.if_branch&.guard_clause?
+          return true unless node.parent&.type?(:begin, :kwbegin)
+
+          next_sibling_empty_or_guard_clause?(node)
         end
 
         def contains_guard_clause?(node)
@@ -138,20 +138,6 @@ module RuboCop
           return false unless (comment = processed_source.comment_at_line(line))
 
           DirectiveComment.new(comment).enabled? || simplecov_directive_comment?(comment)
-        end
-
-        def next_line_rescue_or_ensure?(node)
-          parent = node.parent
-          parent.nil? || parent.rescue_type? || parent.ensure_type?
-        end
-
-        def next_sibling_parent_empty_or_else?(node)
-          next_sibling = node.right_sibling
-          return true unless next_sibling.is_a?(AST::Node)
-
-          parent = next_sibling.parent
-
-          parent&.if_type? && parent.else?
         end
 
         def next_sibling_empty_or_guard_clause?(node)
